@@ -1,0 +1,235 @@
+{
+  "id": "oncology_phase3",
+  "name": "Phase III Oncology Trial",
+  "description": "Pre-populated Phase III oncology protocol with RECIST endpoints, common SOA activities, and typical study design",
+  "metadata": {
+    "protocolNumber": "",
+    "fullTitle": "",
+    "shortTitle": "",
+    "phase": "Phase III",
+    "studyType": "Interventional Study",
+    "therapeuticArea": "Oncology",
+    "indication": "",
+    "sponsorName": "",
+    "sampleSize": null
+  },
+  "studyDesignData": {
+    "interventionModel": {"code": "C82639", "codeSystem": "http://www.cdisc.org", "decode": "Parallel"},
+    "blindingSchema": {"code": "C49658", "codeSystem": "http://www.cdisc.org", "decode": "Double Blind"},
+    "studyArms": [
+      {
+        "id": "arm-exp",
+        "name": "Treatment Arm",
+        "description": "Investigational product",
+        "type": {"code": "C174267", "codeSystem": "http://www.cdisc.org", "decode": "Experimental Arm"},
+        "order": 0
+      },
+      {
+        "id": "arm-ctrl",
+        "name": "Control Arm",
+        "description": "Placebo or standard of care",
+        "type": {"code": "C174266", "codeSystem": "http://www.cdisc.org", "decode": "Placebo Comparator Arm"},
+        "order": 1
+      }
+    ],
+    "studyEpochs": [
+      {
+        "id": "epoch-scr",
+        "name": "Screening",
+        "type": {"code": "C98779", "codeSystem": "http://www.cdisc.org", "decode": "Screening"},
+        "order": 0,
+        "nextEpochId": "epoch-trt"
+      },
+      {
+        "id": "epoch-trt",
+        "name": "Treatment",
+        "type": {"code": "C101526", "codeSystem": "http://www.cdisc.org", "decode": "Treatment"},
+        "order": 1,
+        "previousEpochId": "epoch-scr",
+        "nextEpochId": "epoch-fu"
+      },
+      {
+        "id": "epoch-fu",
+        "name": "Follow-up",
+        "type": {"code": "C99158", "codeSystem": "http://www.cdisc.org", "decode": "Follow-up"},
+        "order": 2,
+        "previousEpochId": "epoch-trt"
+      }
+    ],
+    "studyCells": [
+      {"id": "cell-1", "armId": "arm-exp", "epochId": "epoch-scr", "elementIds": ["elem-scr"]},
+      {"id": "cell-2", "armId": "arm-exp", "epochId": "epoch-trt", "elementIds": ["elem-trt-exp"]},
+      {"id": "cell-3", "armId": "arm-exp", "epochId": "epoch-fu", "elementIds": ["elem-fu"]},
+      {"id": "cell-4", "armId": "arm-ctrl", "epochId": "epoch-scr", "elementIds": ["elem-scr"]},
+      {"id": "cell-5", "armId": "arm-ctrl", "epochId": "epoch-trt", "elementIds": ["elem-trt-ctrl"]},
+      {"id": "cell-6", "armId": "arm-ctrl", "epochId": "epoch-fu", "elementIds": ["elem-fu"]}
+    ],
+    "studyElements": [
+      {"id": "elem-scr", "name": "Screening", "transitionStartRule": "Informed Consent", "transitionEndRule": "Eligibility confirmed"},
+      {"id": "elem-trt-exp", "name": "Treatment (Experimental)", "transitionStartRule": "Randomization", "transitionEndRule": "Disease progression or unacceptable toxicity"},
+      {"id": "elem-trt-ctrl", "name": "Treatment (Control)", "transitionStartRule": "Randomization", "transitionEndRule": "Disease progression or unacceptable toxicity"},
+      {"id": "elem-fu", "name": "Follow-up", "transitionStartRule": "End of Treatment", "transitionEndRule": "End of Study"}
+    ],
+    "encounters": [
+      {"id": "enc-scr", "name": "Screening", "label": "SCR", "epochId": "epoch-scr", "order": 0},
+      {"id": "enc-d1", "name": "Baseline / Day 1", "label": "D1", "epochId": "epoch-trt", "order": 1},
+      {"id": "enc-w2", "name": "Week 2", "label": "W2", "epochId": "epoch-trt", "order": 2},
+      {"id": "enc-w4", "name": "Week 4", "label": "W4", "epochId": "epoch-trt", "order": 3},
+      {"id": "enc-w8", "name": "Week 8", "label": "W8", "epochId": "epoch-trt", "order": 4},
+      {"id": "enc-eot", "name": "End of Treatment", "label": "EOT", "epochId": "epoch-fu", "order": 5},
+      {"id": "enc-fu", "name": "Safety Follow-up", "label": "FU", "epochId": "epoch-fu", "order": 6}
+    ],
+    "activities": [
+      {"id": "act-ic", "name": "Informed Consent", "categoryCode": "ADMIN", "sdtmDomain": "DS"},
+      {"id": "act-elig", "name": "Eligibility Assessment", "categoryCode": "ADMIN", "sdtmDomain": "IE"},
+      {"id": "act-demo", "name": "Demographics", "categoryCode": "ADMIN", "sdtmDomain": "DM"},
+      {"id": "act-mh", "name": "Medical History", "categoryCode": "ADMIN", "sdtmDomain": "MH"},
+      {"id": "act-pe", "name": "Physical Examination", "categoryCode": "CLINICAL", "sdtmDomain": "PE"},
+      {"id": "act-vs", "name": "Vital Signs", "categoryCode": "CLINICAL", "sdtmDomain": "VS"},
+      {"id": "act-ht", "name": "Height", "categoryCode": "CLINICAL", "sdtmDomain": "VS"},
+      {"id": "act-wt", "name": "Weight", "categoryCode": "CLINICAL", "sdtmDomain": "VS"},
+      {"id": "act-ecg", "name": "12-Lead ECG", "categoryCode": "CLINICAL", "sdtmDomain": "EG"},
+      {"id": "act-ecog", "name": "ECOG Performance Status", "categoryCode": "CLINICAL", "sdtmDomain": "QS"},
+      {"id": "act-hem", "name": "Hematology", "categoryCode": "LABORATORY", "sdtmDomain": "LB"},
+      {"id": "act-chem", "name": "Serum Chemistry", "categoryCode": "LABORATORY", "sdtmDomain": "LB"},
+      {"id": "act-tu", "name": "Tumor Assessment", "categoryCode": "EFFICACY", "sdtmDomain": "TU"},
+      {"id": "act-rs", "name": "Disease Response (RECIST 1.1)", "categoryCode": "EFFICACY", "sdtmDomain": "RS"},
+      {"id": "act-drug", "name": "Study Drug Administration", "categoryCode": "TREATMENT", "sdtmDomain": "EX"},
+      {"id": "act-ae", "name": "Adverse Events", "categoryCode": "SAFETY", "sdtmDomain": "AE"},
+      {"id": "act-cm", "name": "Concomitant Medications", "categoryCode": "SAFETY", "sdtmDomain": "CM"}
+    ],
+    "scheduleTimelines": [{
+      "id": "timeline-main",
+      "name": "Main Timeline",
+      "mainTimeline": true,
+      "timings": [
+        {"id": "t-scr", "type": {"code": "WINDOW", "decode": "Window"}, "valueLabel": "Day -28 to -1"},
+        {"id": "t-d1", "type": {"code": "FIXED", "decode": "Fixed"}, "value": "P1D", "valueLabel": "Day 1"},
+        {"id": "t-w2", "type": {"code": "WINDOW", "decode": "Window"}, "value": "P15D", "valueLabel": "Day 15 +/-3", "windowLower": "P3D", "windowUpper": "P3D"},
+        {"id": "t-w4", "type": {"code": "WINDOW", "decode": "Window"}, "value": "P29D", "valueLabel": "Day 29 +/-3", "windowLower": "P3D", "windowUpper": "P3D"},
+        {"id": "t-w8", "type": {"code": "WINDOW", "decode": "Window"}, "value": "P57D", "valueLabel": "Day 57 +/-7", "windowLower": "P7D", "windowUpper": "P7D"},
+        {"id": "t-eot", "type": {"code": "RELATIVE", "decode": "Relative"}, "valueLabel": "<=7 days after last dose"},
+        {"id": "t-fu", "type": {"code": "WINDOW", "decode": "Window"}, "valueLabel": "30 +/-7 days after EOT", "windowLower": "P7D", "windowUpper": "P7D"}
+      ],
+      "instances": [
+        {"id": "si-ic-scr", "activityIds": ["act-ic"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-elig-scr", "activityIds": ["act-elig"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-demo-scr", "activityIds": ["act-demo"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-mh-scr", "activityIds": ["act-mh"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-pe-scr", "activityIds": ["act-pe"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-pe-d1", "activityIds": ["act-pe"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-pe-w8", "activityIds": ["act-pe"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-pe-eot", "activityIds": ["act-pe"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-vs-scr", "activityIds": ["act-vs"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-vs-d1", "activityIds": ["act-vs"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-vs-w2", "activityIds": ["act-vs"], "encounterId": "enc-w2", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-vs-w4", "activityIds": ["act-vs"], "encounterId": "enc-w4", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-vs-w8", "activityIds": ["act-vs"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-vs-eot", "activityIds": ["act-vs"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-vs-fu", "activityIds": ["act-vs"], "encounterId": "enc-fu", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-ht-scr", "activityIds": ["act-ht"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-wt-scr", "activityIds": ["act-wt"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-wt-d1", "activityIds": ["act-wt"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-wt-w8", "activityIds": ["act-wt"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-wt-eot", "activityIds": ["act-wt"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-ecg-scr", "activityIds": ["act-ecg"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-ecg-d1", "activityIds": ["act-ecg"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ecg-w8", "activityIds": ["act-ecg"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ecg-eot", "activityIds": ["act-ecg"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-ecog-scr", "activityIds": ["act-ecog"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-ecog-d1", "activityIds": ["act-ecog"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ecog-w4", "activityIds": ["act-ecog"], "encounterId": "enc-w4", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ecog-w8", "activityIds": ["act-ecog"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ecog-eot", "activityIds": ["act-ecog"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-hem-scr", "activityIds": ["act-hem"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-hem-d1", "activityIds": ["act-hem"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-hem-w2", "activityIds": ["act-hem"], "encounterId": "enc-w2", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-hem-w4", "activityIds": ["act-hem"], "encounterId": "enc-w4", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-hem-w8", "activityIds": ["act-hem"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-hem-eot", "activityIds": ["act-hem"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-chem-scr", "activityIds": ["act-chem"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-chem-d1", "activityIds": ["act-chem"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-chem-w2", "activityIds": ["act-chem"], "encounterId": "enc-w2", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-chem-w4", "activityIds": ["act-chem"], "encounterId": "enc-w4", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-chem-w8", "activityIds": ["act-chem"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-chem-eot", "activityIds": ["act-chem"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-tu-scr", "activityIds": ["act-tu"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-tu-w8", "activityIds": ["act-tu"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-tu-eot", "activityIds": ["act-tu"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-rs-w8", "activityIds": ["act-rs"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-rs-eot", "activityIds": ["act-rs"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-drug-d1", "activityIds": ["act-drug"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-drug-w2", "activityIds": ["act-drug"], "encounterId": "enc-w2", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-drug-w4", "activityIds": ["act-drug"], "encounterId": "enc-w4", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-drug-w8", "activityIds": ["act-drug"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ae-d1", "activityIds": ["act-ae"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ae-w2", "activityIds": ["act-ae"], "encounterId": "enc-w2", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ae-w4", "activityIds": ["act-ae"], "encounterId": "enc-w4", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ae-w8", "activityIds": ["act-ae"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-ae-eot", "activityIds": ["act-ae"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-ae-fu", "activityIds": ["act-ae"], "encounterId": "enc-fu", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-cm-scr", "activityIds": ["act-cm"], "encounterId": "enc-scr", "epochId": "epoch-scr", "defaultConditionId": "mandatory"},
+        {"id": "si-cm-d1", "activityIds": ["act-cm"], "encounterId": "enc-d1", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-cm-w2", "activityIds": ["act-cm"], "encounterId": "enc-w2", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-cm-w4", "activityIds": ["act-cm"], "encounterId": "enc-w4", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-cm-w8", "activityIds": ["act-cm"], "encounterId": "enc-w8", "epochId": "epoch-trt", "defaultConditionId": "mandatory"},
+        {"id": "si-cm-eot", "activityIds": ["act-cm"], "encounterId": "enc-eot", "epochId": "epoch-fu", "defaultConditionId": "mandatory"},
+        {"id": "si-cm-fu", "activityIds": ["act-cm"], "encounterId": "enc-fu", "epochId": "epoch-fu", "defaultConditionId": "mandatory"}
+      ]
+    }],
+    "objectives": [
+      {
+        "id": "obj-os",
+        "name": "Overall Survival",
+        "description": "To compare overall survival (OS) between treatment and control arms",
+        "level": {"code": "C98772", "codeSystem": "http://www.cdisc.org", "decode": "Primary"},
+        "endpoints": [
+          {"id": "ep-os", "name": "Overall Survival (OS)", "description": "Time from randomization to death from any cause", "purpose": "Efficacy"}
+        ]
+      },
+      {
+        "id": "obj-pfs",
+        "name": "Progression-Free Survival",
+        "description": "To compare progression-free survival (PFS) per RECIST 1.1",
+        "level": {"code": "C98773", "codeSystem": "http://www.cdisc.org", "decode": "Secondary"},
+        "endpoints": [
+          {"id": "ep-pfs", "name": "Progression-Free Survival (PFS)", "description": "Time from randomization to disease progression per RECIST 1.1 or death", "purpose": "Efficacy"}
+        ]
+      },
+      {
+        "id": "obj-orr",
+        "name": "Objective Response Rate",
+        "description": "To evaluate objective response rate (ORR) per RECIST 1.1",
+        "level": {"code": "C98773", "codeSystem": "http://www.cdisc.org", "decode": "Secondary"},
+        "endpoints": [
+          {"id": "ep-orr", "name": "Objective Response Rate (ORR)", "description": "Proportion of subjects with confirmed CR or PR per RECIST 1.1", "purpose": "Efficacy"}
+        ]
+      }
+    ],
+    "eligibilityCriteria": [
+      {"id": "inc-1", "name": "I01", "text": "Male or female >= 18 years of age at the time of signing the informed consent", "category": "inclusion", "order": 0},
+      {"id": "inc-2", "name": "I02", "text": "Histologically or cytologically confirmed diagnosis of the target tumor type", "category": "inclusion", "order": 1},
+      {"id": "inc-3", "name": "I03", "text": "Measurable disease per RECIST 1.1", "category": "inclusion", "order": 2},
+      {"id": "inc-4", "name": "I04", "text": "ECOG performance status of 0 or 1", "category": "inclusion", "order": 3},
+      {"id": "inc-5", "name": "I05", "text": "Adequate organ function as defined in the protocol", "category": "inclusion", "order": 4},
+      {"id": "exc-1", "name": "E01", "text": "Prior treatment with [specific therapy class] for the target indication", "category": "exclusion", "order": 0},
+      {"id": "exc-2", "name": "E02", "text": "Known active brain metastases or leptomeningeal disease", "category": "exclusion", "order": 1},
+      {"id": "exc-3", "name": "E03", "text": "History of another malignancy within 3 years (exceptions: adequately treated basal or squamous cell skin cancer, curatively treated in-situ cervical cancer)", "category": "exclusion", "order": 2},
+      {"id": "exc-4", "name": "E04", "text": "Clinically significant cardiovascular disease within 6 months of enrollment", "category": "exclusion", "order": 3}
+    ],
+    "indications": [
+      {"id": "ind-1", "name": "Advanced Solid Tumor", "description": "Locally advanced or metastatic solid tumor"}
+    ],
+    "studyInterventions": [],
+    "biomedicalConcepts": []
+  },
+  "narrativeSections": {
+    "section_1_1": "This section should describe the scientific background and rationale for the study, including relevant preclinical and clinical data supporting the use of the investigational product in the target population.",
+    "section_1_2": "This section should provide a balanced assessment of the known and potential benefits and risks of the investigational product based on available nonclinical and clinical data.",
+    "section_5": "This section should describe the investigational product(s), dosing regimen, route of administration, and any relevant formulation details.",
+    "section_7": "Subjects may discontinue study treatment and/or withdraw from the study at any time. Specific criteria for discontinuation should be outlined here.",
+    "section_9": "This section should describe the statistical methods planned for the primary and secondary analyses, sample size justification, and interim analysis plans if applicable.",
+    "section_10": "This section should describe the definitions, collection, recording, and reporting of adverse events (AEs) and serious adverse events (SAEs).",
+    "section_11": "This section should describe the oversight mechanisms for the study including monitoring, data management, and committee structures."
+  }
+}

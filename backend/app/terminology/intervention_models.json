@@ -1,0 +1,7 @@
+[
+  {"code": "C82639", "decode": "Parallel"},
+  {"code": "C82638", "decode": "Crossover"},
+  {"code": "C82636", "decode": "Sequential"},
+  {"code": "C82637", "decode": "Factorial"},
+  {"code": "C98779", "decode": "Single Group"}
+]

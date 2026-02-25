@@ -1,0 +1,6 @@
+{
+  "detail": "'Measures' is not one of ['DataAnalysis', 'DataCollection', 'DataTabulation', 'QrsInstrument', 'Terminology', 'DraftContent', 'Integrated']\n\nFailed validating 'enum' in schema:\n    {'type': 'string',\n     'enum': ['DataAnalysis',\n              'DataCollection',\n              'DataTabulation',\n              'QrsInstrument',\n              'Terminology',\n              'DraftContent',\n              'Integrated']}\n\nOn instance:\n    'Measures'",
+  "status": 400,
+  "title": "Bad Request",
+  "type": "about:blank"
+}

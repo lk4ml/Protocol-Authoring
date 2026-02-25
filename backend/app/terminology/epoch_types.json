@@ -1,0 +1,7 @@
+[
+  {"code": "C98779", "decode": "Screening"},
+  {"code": "C101527", "decode": "Run-in"},
+  {"code": "C101526", "decode": "Treatment"},
+  {"code": "C99158", "decode": "Follow-up"},
+  {"code": "C99156", "decode": "Washout"}
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "TU",
+    "name": "Tumor Identification",
+    "class": "Findings",
+    "description": "Identification of tumor sites assessed during the study",
+    "oncologySpecific": true,
+    "typicalVariables": ["TULOC", "TUMIDENT", "TUMETHOD"]
+  },
+  {
+    "id": "TR",
+    "name": "Tumor Results",
+    "class": "Findings",
+    "description": "Measurements or qualitative assessments of tumors",
+    "oncologySpecific": true,
+    "typicalVariables": ["TRORRES", "TRSTRESC", "TRMETHOD", "TRLNKID"]
+  },
+  {
+    "id": "RS",
+    "name": "Disease Response",
+    "class": "Findings",
+    "description": "Disease response assessments per RECIST or other criteria",
+    "oncologySpecific": true,
+    "typicalVariables": ["RSORRES", "RSSTRESC", "RSEVAL", "RSCRITV"]
+  }
+]

@@ -1,0 +1,6 @@
+[
+  {"code": "C49656", "decode": "Open Label"},
+  {"code": "C49657", "decode": "Single Blind"},
+  {"code": "C49658", "decode": "Double Blind"},
+  {"code": "C82865", "decode": "Triple Blind"}
+]

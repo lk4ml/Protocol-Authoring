@@ -1,0 +1,38 @@
+{
+  "id": "blank",
+  "name": "Blank Protocol",
+  "description": "Start with an empty protocol structure",
+  "metadata": {
+    "protocolNumber": "",
+    "fullTitle": "",
+    "shortTitle": "",
+    "phase": "",
+    "studyType": "Interventional Study",
+    "therapeuticArea": "",
+    "indication": "",
+    "sponsorName": "",
+    "sampleSize": null
+  },
+  "studyDesignData": {
+    "studyArms": [],
+    "studyEpochs": [],
+    "studyCells": [],
+    "studyElements": [],
+    "encounters": [],
+    "activities": [],
+    "scheduleTimelines": [{
+      "name": "Main Timeline",
+      "mainTimeline": true,
+      "timings": [],
+      "instances": []
+    }],
+    "objectives": [],
+    "estimands": [],
+    "eligibilityCriteria": [],
+    "indications": [],
+    "studyInterventions": [],
+    "interventionModel": null,
+    "blindingSchema": null
+  },
+  "narrativeSections": {}
+}

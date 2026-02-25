@@ -1,0 +1,28 @@
+{
+  "criteria": [
+    {
+      "name": "RECIST 1.1",
+      "description": "Response Evaluation Criteria in Solid Tumors v1.1",
+      "applicability": "Solid tumors",
+      "categories": [
+        {"code": "CR", "decode": "Complete Response", "description": "Disappearance of all target lesions"},
+        {"code": "PR", "decode": "Partial Response", "description": "At least 30% decrease in sum of diameters"},
+        {"code": "SD", "decode": "Stable Disease", "description": "Neither sufficient shrinkage nor increase"},
+        {"code": "PD", "decode": "Progressive Disease", "description": "At least 20% increase in sum of diameters"},
+        {"code": "NE", "decode": "Not Evaluable", "description": "Cannot be classified"}
+      ]
+    },
+    {
+      "name": "iRECIST",
+      "description": "Immune-related Response Evaluation Criteria in Solid Tumors",
+      "applicability": "Immunotherapy in solid tumors",
+      "categories": [
+        {"code": "iCR", "decode": "Immune Complete Response"},
+        {"code": "iPR", "decode": "Immune Partial Response"},
+        {"code": "iSD", "decode": "Immune Stable Disease"},
+        {"code": "iUPD", "decode": "Immune Unconfirmed Progressive Disease"},
+        {"code": "iCPD", "decode": "Immune Confirmed Progressive Disease"}
+      ]
+    }
+  ]
+}

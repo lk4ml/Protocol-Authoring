@@ -1,0 +1,99 @@
+{
+  "_meta": {
+    "description": "SOA hierarchy definitions for protocol flowchart — SOA Groups and Activity Groups",
+    "source": "Derived from ICH M11 protocol template, CDISC SDTM domain organization, and industry protocol conventions",
+    "version": "1.0.0"
+  },
+  "soaGroups": [
+    {
+      "id": "ADMIN",
+      "name": "Administrative",
+      "order": 1,
+      "colorBg": "#F1F5F9",
+      "colorText": "#334155",
+      "colorBorder": "#CBD5E1"
+    },
+    {
+      "id": "SAFETY",
+      "name": "Safety Assessments",
+      "order": 2,
+      "colorBg": "#FEF2F2",
+      "colorText": "#991B1B",
+      "colorBorder": "#FECACA"
+    },
+    {
+      "id": "EFFICACY",
+      "name": "Efficacy Assessments",
+      "order": 3,
+      "colorBg": "#F0FDF4",
+      "colorText": "#166534",
+      "colorBorder": "#BBF7D0"
+    },
+    {
+      "id": "TREATMENT",
+      "name": "Study Treatment",
+      "order": 4,
+      "colorBg": "#ECFEFF",
+      "colorText": "#155E75",
+      "colorBorder": "#A5F3FC"
+    },
+    {
+      "id": "PK",
+      "name": "Pharmacokinetics / Immunogenicity",
+      "order": 5,
+      "colorBg": "#FFF1F2",
+      "colorText": "#9F1239",
+      "colorBorder": "#FECDD3"
+    },
+    {
+      "id": "PRO",
+      "name": "Patient-Reported Outcomes",
+      "order": 6,
+      "colorBg": "#F5F3FF",
+      "colorText": "#5B21B6",
+      "colorBorder": "#DDD6FE"
+    }
+  ],
+  "activityGroups": [
+    { "id": "CONSENT",    "name": "Consent & Enrollment",       "soaGroupId": "ADMIN",     "order": 1 },
+    { "id": "DEMOG",      "name": "Demographics & History",     "soaGroupId": "ADMIN",     "order": 2 },
+    { "id": "CLINICAL",   "name": "Clinical Assessments",       "soaGroupId": "SAFETY",    "order": 1 },
+    { "id": "LABS",       "name": "Laboratory Assessments",     "soaGroupId": "SAFETY",    "order": 2 },
+    { "id": "CARDIAC",    "name": "Cardiac Assessments",        "soaGroupId": "SAFETY",    "order": 3 },
+    { "id": "IMAGING_S",  "name": "Safety Imaging",             "soaGroupId": "SAFETY",    "order": 4 },
+    { "id": "AE",         "name": "Adverse Events",             "soaGroupId": "SAFETY",    "order": 5 },
+    { "id": "TUMOR",      "name": "Tumor Assessments",          "soaGroupId": "EFFICACY",  "order": 1 },
+    { "id": "DISEASE",    "name": "Disease Activity & Response", "soaGroupId": "EFFICACY",  "order": 2 },
+    { "id": "BIOMARKER",  "name": "Biomarkers",                 "soaGroupId": "EFFICACY",  "order": 3 },
+    { "id": "IMAGING_E",  "name": "Efficacy Imaging",           "soaGroupId": "EFFICACY",  "order": 4 },
+    { "id": "FUNCTION",   "name": "Functional Assessments",     "soaGroupId": "EFFICACY",  "order": 5 },
+    { "id": "IP_ADMIN",   "name": "Drug Administration",        "soaGroupId": "TREATMENT", "order": 1 },
+    { "id": "DOSING",     "name": "Dose Management",            "soaGroupId": "TREATMENT", "order": 2 },
+    { "id": "PK_SAMP",    "name": "PK Sampling",                "soaGroupId": "PK",        "order": 1 },
+    { "id": "ADA",        "name": "Immunogenicity",             "soaGroupId": "PK",        "order": 2 },
+    { "id": "QOL",        "name": "Quality of Life",            "soaGroupId": "PRO",       "order": 1 },
+    { "id": "SYMPTOM",    "name": "Symptom & Function Scales",  "soaGroupId": "PRO",       "order": 2 }
+  ],
+  "autoAssignRules": {
+    "_comment": "Rules for auto-assigning soaGroupId and activityGroupId based on uiCategory and sdtmDomain",
+    "byCategoryAndDomain": {
+      "ADMIN":     { "soaGroup": "ADMIN",     "domainMap": { "DS": "CONSENT", "DM": "DEMOG", "IE": "CONSENT", "MH": "DEMOG", "SU": "DEMOG" } },
+      "CLINICAL":  { "soaGroup": "SAFETY",    "domainMap": { "VS": "CLINICAL", "PE": "CLINICAL", "QS": "CLINICAL", "SC": "CLINICAL" } },
+      "LABORATORY":{ "soaGroup": "SAFETY",    "domainMap": { "LB": "LABS", "MB": "LABS", "IS": "LABS", "UR": "LABS" } },
+      "IMAGING":   { "soaGroup": "SAFETY",    "domainMap": { "PR": "IMAGING_S" } },
+      "SAFETY":    { "soaGroup": "SAFETY",    "domainMap": { "AE": "AE", "EG": "CARDIAC", "CE": "AE" } },
+      "EFFICACY":  { "soaGroup": "EFFICACY",  "domainMap": { "TU": "TUMOR", "TR": "TUMOR", "RS": "DISEASE", "QS": "DISEASE", "FT": "FUNCTION", "RE": "FUNCTION", "LB": "BIOMARKER" } },
+      "PK":        { "soaGroup": "PK",        "domainMap": { "PC": "PK_SAMP", "PP": "PK_SAMP", "IS": "ADA" } },
+      "TREATMENT": { "soaGroup": "TREATMENT", "domainMap": { "EX": "IP_ADMIN", "EC": "IP_ADMIN", "DA": "DOSING" } },
+      "PRO":       { "soaGroup": "PRO",       "domainMap": { "QS": "QOL" } }
+    },
+    "defaultActivityGroup": {
+      "ADMIN": "CONSENT",
+      "SAFETY": "CLINICAL",
+      "EFFICACY": "DISEASE",
+      "TREATMENT": "IP_ADMIN",
+      "PK": "PK_SAMP",
+      "PRO": "QOL"
+    }
+  }
+}

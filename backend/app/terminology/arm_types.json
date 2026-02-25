@@ -1,0 +1,7 @@
+[
+  {"code": "C174267", "decode": "Experimental Arm"},
+  {"code": "C174266", "decode": "Placebo Comparator Arm"},
+  {"code": "C174265", "decode": "Active Comparator Arm"},
+  {"code": "C174268", "decode": "No Intervention Arm"},
+  {"code": "C174269", "decode": "Sham Comparator Arm"}
+]

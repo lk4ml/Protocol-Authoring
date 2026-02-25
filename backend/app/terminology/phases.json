@@ -1,0 +1,10 @@
+[
+  {"code": "C49686", "decode": "Phase 0 Trial", "label": "Phase 0"},
+  {"code": "C15600", "decode": "Phase I Trial", "label": "Phase I"},
+  {"code": "C15693", "decode": "Phase I/II Trial", "label": "Phase I/II"},
+  {"code": "C15601", "decode": "Phase II Trial", "label": "Phase II"},
+  {"code": "C15694", "decode": "Phase II/III Trial", "label": "Phase II/III"},
+  {"code": "C15602", "decode": "Phase III Trial", "label": "Phase III"},
+  {"code": "C49688", "decode": "Phase IIIb Trial", "label": "Phase IIIb"},
+  {"code": "C15603", "decode": "Phase IV Trial", "label": "Phase IV"}
+]
