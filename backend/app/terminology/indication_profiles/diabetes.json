@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "id": "DIABETES",
+    "name": "Diabetes / Metabolic",
+    "description": "Indication profile for diabetes and metabolic disease trials. Adds glycemic endpoints, renal function, and CV safety monitoring. Extends the default profile.",
+    "version": "1.0.0"
+  },
+
+  "conditionSignals": [
+    "diabetes", "diabetic", "glycemic", "hba1c", "insulin",
+    "sglt2", "glp-1", "metformin", "type 2 diabetes",
+    "type 1 diabetes", "gestational diabetes", "hyperglycemia",
+    "metabolic syndrome", "obesity", "nafld", "nash"
+  ],
+
+  "additionalOutcomeSignals": {
+    "LB_GLYC": ["hba1c", "glycated", "fasting glucose", "fasting plasma glucose",
+                "fpg", "postprandial glucose", "ogtt", "insulin resistance",
+                "homa-ir", "c-peptide"]
+  },
+
+  "additionalOutcomeToSearch": {
+    "LB_GLYC": ["HbA1c", "Glucose", "Fasting Plasma Glucose"]
+  },
+
+  "additionalEligibilitySignals": {
+    "hba1c":              ["HbA1c"],
+    "fasting glucose":    ["Glucose"],
+    "body mass index":    ["Body Mass Index"],
+    "bmi":                ["Body Mass Index"],
+    "estimated gfr":      ["Creatinine"],
+    "egfr":               ["Creatinine"]
+  },
+
+  "additionalProAbbreviations": [
+    "dtsq", "eq-5d-5l", "sf-36", "iwqol-lite", "phq-9"
+  ],
+
+  "visitTemplates": {
+    "PHASE2":  [2, 4, 8, 12, 16, 24],
+    "PHASE3":  [4, 8, 12, 16, 24, 36, 52],
+    "DEFAULT": [4, 12, 24, 52]
+  }
+}

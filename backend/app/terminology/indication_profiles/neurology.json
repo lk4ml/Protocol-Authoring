@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "id": "NEUROLOGY",
+    "name": "Neurology",
+    "description": "Indication profile for neurology trials. Adds cognitive assessments, imaging, and neurological scales. Extends the default profile.",
+    "version": "1.0.0"
+  },
+
+  "conditionSignals": [
+    "alzheimer", "parkinson", "multiple sclerosis",
+    "epilepsy", "dementia", "neuropathy", "neurodegenerat",
+    "huntington", "amyotrophic lateral", "als",
+    "migraine", "traumatic brain"
+  ],
+
+  "additionalOutcomeSignals": {
+    "FT": ["cognitive", "mmse", "adas-cog", "cdr", "mini-mental",
+           "moca", "neuropsychological", "memory", "executive function"]
+  },
+
+  "additionalOutcomeToSearch": {
+    "FT": ["Cognitive Function", "ADAS-Cog", "MMSE", "MoCA"]
+  },
+
+  "additionalEligibilitySignals": {
+    "mmse":       ["MMSE", "Cognitive Function"],
+    "cdr":        ["CDR", "Cognitive Function"],
+    "moca":       ["MoCA", "Cognitive Function"],
+    "mri brain":  ["MRI Scan"]
+  },
+
+  "additionalProAbbreviations": [
+    "adas-cog", "mmse", "moca", "cdr-sb", "cdr",
+    "npi", "adcs-adl", "updrs", "mds-updrs",
+    "edss", "msfc", "hit-6"
+  ],
+
+  "visitTemplates": {
+    "PHASE2":  [4, 8, 12, 24, 36, 52],
+    "PHASE3":  [4, 12, 24, 36, 52, 78, 104],
+    "DEFAULT": [4, 12, 24, 52]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "_meta": {
+    "id": "IMMUNOLOGY",
+    "name": "Immunology / Autoimmune",
+    "description": "Indication profile for immunology and autoimmune disease trials. Adds disease activity scores, inflammatory markers, and dermatology endpoints. Extends the default profile.",
+    "version": "1.0.0"
+  },
+
+  "conditionSignals": [
+    "rheumatoid arthritis", "lupus", "psoriasis",
+    "crohn", "ulcerative colitis", "autoimmune",
+    "atopic dermatitis", "ankylosing spondylitis",
+    "psoriatic arthritis", "systemic sclerosis",
+    "multiple sclerosis", "vasculitis"
+  ],
+
+  "additionalOutcomeSignals": {
+    "DAS": ["das28", "acr20", "acr50", "acr70",
+            "disease activity score", "swollen joint", "tender joint"],
+    "PASI": ["pasi", "iga", "bsa", "psoriasis area"]
+  },
+
+  "additionalOutcomeToSearch": {
+    "DAS":  ["Disease Activity Score"],
+    "PASI": ["PASI Score"]
+  },
+
+  "additionalEligibilitySignals": {
+    "das28":              ["Disease Activity Score"],
+    "acr criteria":       ["ACR Response"],
+    "pasi":               ["PASI Score"],
+    "c-reactive protein": ["C-Reactive Protein"],
+    "esr":                ["Erythrocyte Sedimentation Rate"]
+  },
+
+  "additionalProAbbreviations": [
+    "das28", "acr20", "acr50", "acr70",
+    "pasi", "dlqi", "scorad", "easi",
+    "haq-di", "basdai", "sf-36", "eq-5d-5l",
+    "cdai", "mayo score"
+  ],
+
+  "visitTemplates": {
+    "PHASE2":  [2, 4, 8, 12, 16, 24],
+    "PHASE3":  [2, 4, 8, 12, 16, 24, 36, 52],
+    "DEFAULT": [4, 8, 12, 24, 52]
+  }
+}

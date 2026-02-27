@@ -1,25 +1,50 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import inspect, text
 
 from .config import settings
 from .database import engine, Base
 from .routers import protocols, design, schedule, terminology, templates, export, references, ctgov_proxy
 
+logger = logging.getLogger(__name__)
+
+# Create SQLite tables if they don't exist (safe for development).
+# For production, use: alembic upgrade head
 Base.metadata.create_all(bind=engine)
 
-# Auto-migrate existing databases — add columns that were introduced after initial schema
-_inspector = inspect(engine)
-_existing_cols = [c["name"] for c in _inspector.get_columns("protocols")]
-if "reference_trials" not in _existing_cols:
-    with engine.connect() as _conn:
-        _conn.execute(text("ALTER TABLE protocols ADD COLUMN reference_trials JSON DEFAULT '[]'"))
-        _conn.commit()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup / shutdown lifecycle: initialize Neo4j driver + schema."""
+    try:
+        from .graph import get_driver, close_driver, verify_connectivity
+        from .graph.schema import ensure_constraints
+
+        driver = await get_driver()
+        await verify_connectivity()
+        await ensure_constraints(driver)
+        logger.info("Neo4j connected and schema initialized")
+    except Exception as e:
+        # Neo4j is optional during Phase 1 — log and continue with SQLite only
+        logger.warning(f"Neo4j not available ({e}). Running in SQLite-only mode.")
+
+    yield
+
+    # Shutdown
+    try:
+        from .graph import close_driver
+        await close_driver()
+    except Exception:
+        pass
+
 
 app = FastAPI(
     title="Protocol Authoring Platform",
     description="ICH M11 / USDM v3.0 compliant clinical trial protocol authoring",
-    version="1.0.0",
+    version="2.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -41,5 +66,12 @@ app.include_router(ctgov_proxy.router, prefix="/api/ctgov", tags=["ClinicalTrial
 
 
 @app.get("/api/health")
-def health_check():
-    return {"status": "ok"}
+async def health_check():
+    status = {"status": "ok", "version": "2.0.0", "database": "sqlite"}
+    try:
+        from .graph import verify_connectivity
+        await verify_connectivity()
+        status["graph"] = "neo4j_connected"
+    except Exception:
+        status["graph"] = "not_connected"
+    return status

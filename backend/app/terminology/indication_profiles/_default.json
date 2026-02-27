@@ -1,0 +1,141 @@
+{
+  "_meta": {
+    "id": "ALL",
+    "name": "Default / Generic",
+    "description": "Default indication profile used when no TA-specific profile matches. Contains the universal signal, outcome, eligibility, and PRO rules that apply to all therapeutic areas.",
+    "version": "1.0.0"
+  },
+
+  "conditionSignals": {
+    "_doc": "Condition text patterns that identify a trial's therapeutic area. Matched against conditions and keywords fields from ClinicalTrials.gov."
+  },
+
+  "coreExcludePatterns": [
+    "date of delivery", "adrenarche", "menarche", "menopause",
+    "first oral sex", "first sexual", "gravidity", "parity",
+    "cervical", "vaginal", "penile", "testicular",
+    "caffeine", "cotinine", "tobacco", "alcohol use",
+    "nnal", "color", "odor", "clarity", "specific gravity",
+    "age started", "age at ", "appendicular skeletal",
+    "skeletal muscle mass", "bone mineral", "skin fold",
+    "clinical change by non-invasive", "non-invasive imaging",
+    "aggregate pr interval", "aggregate qrs duration",
+    "acute myocardial infarction type",
+    "alpha angle", "acetabular", "femoral", "hip angle",
+    "joint space", "kellgren", "schober", "trabecular",
+    "disc height", "vertebral", "spinal canal",
+    "circumference", "waist-to-hip",
+    "menstrual", "menstruation", "ovulation", "ovarian",
+    "uterine", "endometrial", "mammographic",
+    "non-invasive imaging procedure",
+    "beta angle", "center edge angle", "sharp angle",
+    "intervertebral", "disc degeneration",
+    "tibial", "femoral head", "lateral subluxation",
+    "pelvic", "sacroiliac", "nucleus pulposus",
+    "cellularity", "circulating tumor",
+    "biopsy", "autopsy", "necropsy",
+    "lesion measurement", "lesion assess",
+    "birth control", "contraception", "fertility",
+    "lactation", "breastfeeding", "nursing",
+    "dental", "ophthalmol", "audiolog", "dermatolog",
+    "head circumference", "mid-upper arm",
+    "grip strength", "hand grip", "peak flow",
+    "genital", "sexual"
+  ],
+
+  "ichM11RowNames": {
+    "CONSENT":  ["informed consent", "eligibility", "disposition"],
+    "DEMOG":    ["demographics", "medical history", "concomitant medication",
+                 "prior medication", "substance use", "randomization"],
+    "CLINICAL": ["vital signs measurement", "physical examination", "body weight",
+                 "body height", "body mass index", "body surface area",
+                 "performance status"],
+    "LABS":     ["hematology test", "chemistry test", "urinalysis",
+                 "liver function", "coagulation", "thyroid", "pregnancy"],
+    "AE":       ["adverse event", "serious adverse event", "clinical events"],
+    "IP_ADMIN": ["study drug", "drug administration", "dose modification",
+                 "treatment compliance", "exposure tracking"],
+    "CARDIAC":  ["electrocardiogram", "ecg measurement"]
+  },
+
+  "maxPerActivityGroup": {
+    "CONSENT": 2,
+    "DEMOG": 5,
+    "CLINICAL": 6,
+    "LABS": 5,
+    "AE": 3,
+    "IP_ADMIN": 3,
+    "CARDIAC": 2
+  },
+
+  "outcomeSignals": {
+    "EG":      ["ecg", "electrocardiogram", "qtc", "qt interval"],
+    "PR_CT":   ["ct scan", "computed tomography"],
+    "PR_MRI":  ["mri", "magnetic resonance"],
+    "PR_PET":  ["pet", "positron emission"],
+    "PR_XRAY": ["x-ray", "xray", "radiograph"],
+    "PR_ECHO": ["echocardiogram", "echo", "lvef", "ejection fraction"],
+    "PC":      ["pharmacokinetic", "pk ", "clearance", "volume of distribution",
+                "auc", "cmax", "trough"],
+    "IS":      ["anti-drug antibod", "ada ", "immunogenicity"],
+    "QS":      ["quality of life", "eq-5d", "eortc", "patient reported", "pro "],
+    "RS":      ["recist", "tumor response", "tumor assess", "disease response",
+                "objective response"],
+    "SURV":    ["overall survival", "progression-free", "pfs ", "os "],
+    "AE":      ["adverse event", "safety", "tolerability"],
+    "GF":      ["biomarker", "pd-l1", "ctdna", "circulating tumor"],
+    "LB_GLYC": ["hba1c", "glycat", "fasting glucose", "fasting plasma"],
+    "VS_BP":   ["blood pressure", "systolic", "diastolic"],
+    "FT":      ["cognitive", "mmse", "adas-cog", "cdr", "mini-mental"]
+  },
+
+  "outcomeToSearch": {
+    "EG":      ["Electrocardiogram"],
+    "PR_CT":   ["CT Scan"],
+    "PR_MRI":  ["MRI Scan"],
+    "PR_PET":  ["PET Scan"],
+    "PR_XRAY": ["X-Ray"],
+    "PR_ECHO": ["Echocardiogram"],
+    "PC":      ["PK Blood Sampling", "Pharmacokinetic"],
+    "IS":      ["Anti-Drug Antibody", "Immunogenicity"],
+    "QS":      ["EQ-5D", "EORTC", "Quality of Life"],
+    "RS":      ["Tumor Identification", "Disease Response"],
+    "SURV":    ["Tumor Identification", "Disease Response"],
+    "AE":      [],
+    "GF":      ["Tumor Mutation Burden", "Biomarker"],
+    "LB_GLYC": ["Glucose"],
+    "VS_BP":   ["Blood Pressure"],
+    "FT":      ["Cognitive Function"]
+  },
+
+  "eligibilitySignals": {
+    "performance status":  ["Clinical Performance Status", "ECOG"],
+    "ecog":                ["Clinical Performance Status", "ECOG"],
+    "pregnancy test":      ["Pregnancy Finding"],
+    "childbearing":        ["Pregnancy Finding"],
+    "hepatitis":           ["Hepatitis B Surface Antigen", "Hepatitis"],
+    "hiv":                 ["HIV"],
+    "liver function":      ["Liver Function Test"],
+    "hepatic function":    ["Liver Function Test"],
+    "renal function":      ["Creatinine"],
+    "creatinine":          ["Creatinine"],
+    "egfr":                ["Creatinine"]
+  },
+
+  "knownProAbbreviations": [
+    "eortc qlq-c30", "eq-5d-5l", "eq-5d-3l", "sf-36", "sf-12",
+    "phq-9", "gad-7", "fact-g", "fact-b", "fact-l", "fact-p",
+    "promis", "bdi-ii", "bdi", "madrs", "ham-d", "ham-a",
+    "panss", "updrs", "adas-cog", "mmse", "moca",
+    "acr20", "das28", "pasi", "dlqi", "scorad",
+    "karnofsky", "ecog", "womac", "osdi", "vfq-25",
+    "c-ssrs", "cgi-s", "cgi-i"
+  ],
+
+  "visitTemplates": {
+    "PHASE1":  [1, 2, 3, 4, 6, 8],
+    "PHASE2":  [2, 4, 8, 12, 16, 20, 24],
+    "PHASE3":  [3, 6, 9, 12, 18, 24, 36, 48],
+    "DEFAULT": [4, 8, 12, 24, 36, 48]
+  }
+}

@@ -29,13 +29,16 @@ build/
 .DS_Store
 Thumbs.db
 
-# Environment & secrets
-.env
+# Environment secrets (local overrides)
 .env.local
 .env.*.local
+# NOTE: .env files with defaults ARE committed; override with .env.local
 
 # Vite
 .vite/
 
 # Claude Code
 .claude/
+
+# Archived legacy code
+_archive/

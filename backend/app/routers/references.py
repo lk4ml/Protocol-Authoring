@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 from ..database import get_db
 from ..db import crud
+from ..models.requests import ReferenceTrialRequest
 
 router = APIRouter()
 
@@ -26,20 +27,24 @@ def get_references(protocol_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{protocol_id}/references")
-def add_reference(protocol_id: str, body: dict, db: Session = Depends(get_db)):
+def add_reference(
+    protocol_id: str,
+    body: ReferenceTrialRequest,
+    db: Session = Depends(get_db),
+):
     """Add a parsed reference trial. Rejects duplicates by nctId."""
     protocol = crud.get_protocol(db, protocol_id)
     if not protocol:
         raise HTTPException(status_code=404, detail="Protocol not found")
 
     refs = list(protocol.reference_trials or [])
-    nct_id = body.get("nctId", "")
+    nct_id = body.nctId
 
     # Prevent duplicates
     if any(r.get("nctId") == nct_id for r in refs):
         raise HTTPException(status_code=409, detail="Trial already added as reference")
 
-    refs.append(body)
+    refs.append(body.model_dump())
     protocol.reference_trials = refs
     protocol.updated_at = datetime.now(timezone.utc)
     db.commit()

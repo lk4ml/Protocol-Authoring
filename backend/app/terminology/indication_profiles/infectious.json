@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "id": "INFECTIOUS",
+    "name": "Infectious Disease",
+    "description": "Indication profile for infectious disease and vaccine trials. Adds viral load, immunogenicity, seroconversion endpoints. Extends the default profile.",
+    "version": "1.0.0"
+  },
+
+  "conditionSignals": [
+    "hiv", "hepatitis", "covid", "sars-cov", "tuberculosis",
+    "influenza", "malaria", "infection", "vaccine",
+    "coronavirus", "rsv", "ebola", "dengue", "pneumonia",
+    "meningitis", "sepsis", "antiviral", "antibiotic"
+  ],
+
+  "additionalOutcomeSignals": {
+    "MB": ["viral load", "viral clearance", "seroconversion",
+           "antibody titer", "immunogenicity", "pcr",
+           "viral rna", "viral dna"]
+  },
+
+  "additionalOutcomeToSearch": {
+    "MB": ["Viral Load", "Seroconversion"]
+  },
+
+  "additionalEligibilitySignals": {
+    "viral load":     ["Viral Load"],
+    "cd4 count":      ["CD4 Count"],
+    "pcr positive":   ["PCR Test"],
+    "antigen":        ["Antigen Test"],
+    "vaccination":    ["Vaccination History"]
+  },
+
+  "additionalProAbbreviations": [
+    "flu-iiqs", "flu-pro", "eq-5d-5l", "sf-36"
+  ],
+
+  "visitTemplates": {
+    "PHASE1":  [1, 2, 3, 4, 8],
+    "PHASE2":  [1, 2, 4, 8, 12, 24],
+    "PHASE3":  [2, 4, 8, 12, 24, 52],
+    "DEFAULT": [2, 4, 8, 12, 24]
+  }
+}

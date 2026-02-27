@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrialForge Neo4j Graph Schema</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #0d1117; color: #c9d1d9; }
+        h1 { color: #58a6ff; text-align: center; }
+        h2 { color: #79c0ff; margin-top: 40px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+        h3 { color: #d2a8ff; }
+        .diagram-container { background: #161b22; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #30363d; overflow-x: auto; }
+        table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+        th, td { border: 1px solid #30363d; padding: 8px 12px; text-align: left; }
+        th { background: #161b22; color: #58a6ff; }
+        td { color: #c9d1d9; }
+        tr:nth-child(even) { background: #0d1117; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .badge-node { background: #1f6feb33; color: #58a6ff; }
+        .badge-rel { background: #238636; color: #3fb950; }
+        .badge-prop { background: #8b949e33; color: #8b949e; }
+        code { background: #161b22; padding: 2px 6px; border-radius: 4px; color: #f0883e; }
+        .stats { display: flex; gap: 20px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .stat { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px 24px; text-align: center; }
+        .stat-num { font-size: 32px; font-weight: 700; color: #58a6ff; }
+        .stat-label { color: #8b949e; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>TrialForge — Neo4j Graph Schema</h1>
+    <p style="text-align:center; color:#8b949e;">22 Node Types &bull; 32 Relationship Types &bull; USDM v3.0 Aligned</p>
+
+    <div class="stats">
+        <div class="stat"><div class="stat-num">22</div><div class="stat-label">Node Types</div></div>
+        <div class="stat"><div class="stat-num">32</div><div class="stat-label">Relationship Types</div></div>
+        <div class="stat"><div class="stat-num">23</div><div class="stat-label">Unique Constraints</div></div>
+        <div class="stat"><div class="stat-num">6</div><div class="stat-label">Indexes</div></div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>1. Full Graph — All Nodes &amp; Relationships</h2>
+    <!-- ============================================================ -->
+    <div class="diagram-container">
+        <pre class="mermaid">
+graph TD
+    %% === PROTOCOL (Central Hub) ===
+    P["<b>Protocol</b><br/>id, protocolNumber, phase,<br/>therapeuticArea, status"]
+
+    %% === STUDY DESIGN LAYER ===
+    ARM["<b>StudyArm</b><br/>id, name, type, order"]
+    EPOCH["<b>StudyEpoch</b><br/>id, name, type, order"]
+    ELEM["<b>StudyElement</b><br/>id, name, color"]
+    CELL["<b>StudyCell</b><br/>id"]
+    MARKER["<b>StudyMarker</b><br/>id, type, label, ratio"]
+    FLOW["<b>StudyFlowOverride</b><br/>id, key"]
+
+    %% === SCHEDULE / SOA LAYER ===
+    ENC["<b>Encounter</b><br/>id, name, week, order"]
+    ACT["<b>Activity</b><br/>id, name, sdtmDomain"]
+    PROC["<b>Procedure</b><br/>id, name, type"]
+    TL["<b>ScheduleTimeline</b><br/>id, name, mainTimeline"]
+    INST["<b>ScheduledActivity<br/>Instance</b><br/>id, defaultConditionId"]
+    TIMING["<b>Timing</b><br/>id, value, window"]
+
+    %% === SOA HIERARCHY ===
+    SOA["<b>SoaGroup</b><br/>id, name, order, colors"]
+    AG["<b>ActivityGroup</b><br/>id, name, order"]
+
+    %% === OBJECTIVES LAYER ===
+    OBJ["<b>Objective</b><br/>id, name, level"]
+    EP["<b>Endpoint</b><br/>id, name, purpose"]
+    EST["<b>Estimand</b><br/>id, treatment, measure"]
+
+    %% === POPULATION ===
+    CRIT["<b>EligibilityCriterion</b><br/>id, text, category"]
+
+    %% === REFERENCE ===
+    REF["<b>ReferenceTrial</b><br/>nctId, title, phase"]
+    IND["<b>Indication</b><br/>id, name"]
+    INTV["<b>Investigational<br/>Intervention</b><br/>id, name, route"]
+
+    %% ====== PROTOCOL → child relationships ======
+    P -->|HAS_ARM| ARM
+    P -->|HAS_EPOCH| EPOCH
+    P -->|HAS_ELEMENT| ELEM
+    P -->|HAS_CELL| CELL
+    P -->|HAS_MARKER| MARKER
+    P -->|HAS_FLOW_OVERRIDE| FLOW
+    P -->|HAS_ENCOUNTER| ENC
+    P -->|HAS_ACTIVITY| ACT
+    P -->|HAS_TIMELINE| TL
+    P -->|HAS_SOA_GROUP| SOA
+    P -->|HAS_ACTIVITY_GROUP| AG
+    P -->|HAS_OBJECTIVE| OBJ
+    P -->|HAS_CRITERION| CRIT
+    P -->|HAS_INDICATION| IND
+    P -->|HAS_INTERVENTION| INTV
+    P -->|REFERENCES_TRIAL| REF
+
+    %% ====== STUDY CELL junction ======
+    CELL -->|IN_ARM| ARM
+    CELL -->|IN_EPOCH| EPOCH
+    CELL -->|CONTAINS_ELEMENT| ELEM
+
+    %% ====== LINKED LISTS ======
+    EPOCH -.->|NEXT_EPOCH| EPOCH
+    ENC -.->|NEXT_ENCOUNTER| ENC
+    ACT -.->|NEXT_ACTIVITY| ACT
+
+    %% ====== MARKER → EPOCH ======
+    MARKER -->|AFTER_EPOCH| EPOCH
+
+    %% ====== FLOW OVERRIDE → arms/epochs ======
+    FLOW -->|FROM_ARM| ARM
+    FLOW -->|FROM_EPOCH| EPOCH
+    FLOW -->|TO_ARM| ARM
+
+    %% ====== ENCOUNTER → EPOCH ======
+    ENC -->|IN_EPOCH| EPOCH
+
+    %% ====== ELEMENT → INTERVENTION ======
+    ELEM -->|USES_INTERVENTION| INTV
+
+    %% ====== ACTIVITY hierarchy ======
+    ACT -->|DEFINES_PROCEDURE| PROC
+    ACT -->|IN_SOA_GROUP| SOA
+    ACT -->|IN_ACTIVITY_GROUP| AG
+    AG -->|BELONGS_TO_SOA| SOA
+
+    %% ====== TIMELINE → children ======
+    TL -->|HAS_INSTANCE| INST
+    TL -->|HAS_TIMING| TIMING
+
+    %% ====== INSTANCE (SOA matrix junction) ======
+    INST -->|FOR_ACTIVITY| ACT
+    INST -->|AT_ENCOUNTER| ENC
+    INST -->|IN_EPOCH| EPOCH
+
+    %% ====== TIMING → instances ======
+    TIMING -.->|RELATIVE_FROM| INST
+    TIMING -.->|RELATIVE_TO| INST
+
+    %% ====== OBJECTIVES ======
+    OBJ -->|HAS_ENDPOINT| EP
+    EST -->|FOR_OBJECTIVE| OBJ
+
+    %% ====== STYLES ======
+    classDef protocol fill:#1f6feb,stroke:#58a6ff,color:#fff,stroke-width:3px
+    classDef design fill:#238636,stroke:#3fb950,color:#fff
+    classDef schedule fill:#8957e5,stroke:#bc8cff,color:#fff
+    classDef soa fill:#da3633,stroke:#f85149,color:#fff
+    classDef objective fill:#d29922,stroke:#e3b341,color:#fff
+    classDef reference fill:#388bfd,stroke:#58a6ff,color:#fff
+
+    class P protocol
+    class ARM,EPOCH,ELEM,CELL,MARKER,FLOW design
+    class ENC,ACT,PROC,TL,INST,TIMING schedule
+    class SOA,AG soa
+    class OBJ,EP,EST,CRIT objective
+    class REF,IND,INTV reference
+        </pre>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>2. Study Design Subgraph</h2>
+    <p>How arms, epochs, cells, elements, markers, and flow overrides connect.</p>
+    <!-- ============================================================ -->
+    <div class="diagram-container">
+        <pre class="mermaid">
+graph LR
+    subgraph Protocol
+        P["Protocol"]
+    end
+
+    subgraph "Design Matrix"
+        A1["Arm: Placebo"]
+        A2["Arm: Treatment"]
+        E1["Epoch: Screening"]
+        E2["Epoch: Treatment"]
+        E3["Epoch: Follow-up"]
+        C1["Cell"]
+        C2["Cell"]
+        C3["Cell"]
+        C4["Cell"]
+        C5["Cell"]
+        C6["Cell"]
+        EL1["Element: Placebo"]
+        EL2["Element: Drug A"]
+    end
+
+    subgraph Markers
+        M1["Marker: R<br/>ratio: 1:1"]
+    end
+
+    P -->|HAS_ARM| A1
+    P -->|HAS_ARM| A2
+    P -->|HAS_EPOCH| E1
+    P -->|HAS_EPOCH| E2
+    P -->|HAS_EPOCH| E3
+
+    E1 -.->|NEXT_EPOCH| E2
+    E2 -.->|NEXT_EPOCH| E3
+
+    C1 -->|IN_ARM| A1
+    C1 -->|IN_EPOCH| E1
+    C2 -->|IN_ARM| A1
+    C2 -->|IN_EPOCH| E2
+    C2 -->|CONTAINS_ELEMENT| EL1
+    C3 -->|IN_ARM| A1
+    C3 -->|IN_EPOCH| E3
+
+    C4 -->|IN_ARM| A2
+    C4 -->|IN_EPOCH| E1
+    C5 -->|IN_ARM| A2
+    C5 -->|IN_EPOCH| E2
+    C5 -->|CONTAINS_ELEMENT| EL2
+    C6 -->|IN_ARM| A2
+    C6 -->|IN_EPOCH| E3
+
+    M1 -->|AFTER_EPOCH| E1
+
+    classDef arm fill:#238636,stroke:#3fb950,color:#fff
+    classDef epoch fill:#1f6feb,stroke:#58a6ff,color:#fff
+    classDef cell fill:#30363d,stroke:#8b949e,color:#c9d1d9
+    classDef elem fill:#8957e5,stroke:#bc8cff,color:#fff
+    classDef marker fill:#da3633,stroke:#f85149,color:#fff
+
+    class A1,A2 arm
+    class E1,E2,E3 epoch
+    class C1,C2,C3,C4,C5,C6 cell
+    class EL1,EL2 elem
+    class M1 marker
+        </pre>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>3. SOA Matrix (Schedule) Subgraph</h2>
+    <p>How the Schedule of Assessments matrix maps to graph nodes.</p>
+    <!-- ============================================================ -->
+    <div class="diagram-container">
+        <pre class="mermaid">
+graph TD
+    subgraph "SOA Hierarchy"
+        SOA1["SoaGroup: SAFETY"]
+        SOA2["SoaGroup: EFFICACY"]
+        AG1["ActivityGroup: LABS"]
+        AG2["ActivityGroup: CARDIAC"]
+        AG3["ActivityGroup: TUMOR"]
+    end
+
+    subgraph Activities
+        ACT1["Activity: CBC"]
+        ACT2["Activity: ECG"]
+        ACT3["Activity: CT Scan"]
+        PR1["Procedure: Blood Draw"]
+        PR2["Procedure: 12-Lead ECG"]
+    end
+
+    subgraph Visits
+        V1["Encounter: Visit 1<br/>Week 0"]
+        V2["Encounter: Visit 2<br/>Week 4"]
+        V3["Encounter: Visit 3<br/>Week 8"]
+    end
+
+    subgraph "SOA Matrix Intersections"
+        I1["Instance ✓<br/>mandatory"]
+        I2["Instance ✓<br/>mandatory"]
+        I3["Instance ○<br/>conditional"]
+        I4["Instance ✓<br/>mandatory"]
+    end
+
+    subgraph Timeline
+        TL["ScheduleTimeline:<br/>Main Timeline"]
+    end
+
+    AG1 -->|BELONGS_TO_SOA| SOA1
+    AG2 -->|BELONGS_TO_SOA| SOA1
+    AG3 -->|BELONGS_TO_SOA| SOA2
+
+    ACT1 -->|IN_ACTIVITY_GROUP| AG1
+    ACT2 -->|IN_ACTIVITY_GROUP| AG2
+    ACT3 -->|IN_ACTIVITY_GROUP| AG3
+
+    ACT1 -->|DEFINES_PROCEDURE| PR1
+    ACT2 -->|DEFINES_PROCEDURE| PR2
+
+    V1 -.->|NEXT_ENCOUNTER| V2
+    V2 -.->|NEXT_ENCOUNTER| V3
+
+    TL -->|HAS_INSTANCE| I1
+    TL -->|HAS_INSTANCE| I2
+    TL -->|HAS_INSTANCE| I3
+    TL -->|HAS_INSTANCE| I4
+
+    I1 -->|FOR_ACTIVITY| ACT1
+    I1 -->|AT_ENCOUNTER| V1
+
+    I2 -->|FOR_ACTIVITY| ACT1
+    I2 -->|AT_ENCOUNTER| V2
+
+    I3 -->|FOR_ACTIVITY| ACT2
+    I3 -->|AT_ENCOUNTER| V1
+
+    I4 -->|FOR_ACTIVITY| ACT3
+    I4 -->|AT_ENCOUNTER| V3
+
+    classDef soagrp fill:#da3633,stroke:#f85149,color:#fff
+    classDef actgrp fill:#d29922,stroke:#e3b341,color:#fff
+    classDef activity fill:#238636,stroke:#3fb950,color:#fff
+    classDef encounter fill:#1f6feb,stroke:#58a6ff,color:#fff
+    classDef instance fill:#8957e5,stroke:#bc8cff,color:#fff
+    classDef timeline fill:#388bfd,stroke:#58a6ff,color:#fff
+
+    class SOA1,SOA2 soagrp
+    class AG1,AG2,AG3 actgrp
+    class ACT1,ACT2,ACT3,PR1,PR2 activity
+    class V1,V2,V3 encounter
+    class I1,I2,I3,I4 instance
+    class TL timeline
+        </pre>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>4. Objectives &amp; Endpoints Subgraph</h2>
+    <!-- ============================================================ -->
+    <div class="diagram-container">
+        <pre class="mermaid">
+graph LR
+    P["Protocol"]
+
+    OBJ1["Objective: Primary<br/>Assess overall survival"]
+    OBJ2["Objective: Secondary<br/>Assess tumor response"]
+
+    EP1["Endpoint:<br/>Overall Survival (OS)"]
+    EP2["Endpoint:<br/>Progression-Free Survival"]
+    EP3["Endpoint:<br/>Overall Response Rate"]
+
+    CRIT1["Criterion: inclusion<br/>Age >= 18"]
+    CRIT2["Criterion: inclusion<br/>ECOG 0-1"]
+    CRIT3["Criterion: exclusion<br/>Prior chemotherapy"]
+
+    P -->|HAS_OBJECTIVE| OBJ1
+    P -->|HAS_OBJECTIVE| OBJ2
+    P -->|HAS_CRITERION| CRIT1
+    P -->|HAS_CRITERION| CRIT2
+    P -->|HAS_CRITERION| CRIT3
+
+    OBJ1 -->|HAS_ENDPOINT| EP1
+    OBJ2 -->|HAS_ENDPOINT| EP2
+    OBJ2 -->|HAS_ENDPOINT| EP3
+
+    classDef obj fill:#d29922,stroke:#e3b341,color:#fff
+    classDef ep fill:#238636,stroke:#3fb950,color:#fff
+    classDef crit fill:#da3633,stroke:#f85149,color:#fff
+
+    class OBJ1,OBJ2 obj
+    class EP1,EP2,EP3 ep
+    class CRIT1,CRIT2,CRIT3 crit
+        </pre>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>5. Complete Relationship Catalog</h2>
+    <!-- ============================================================ -->
+    <table>
+        <tr><th>#</th><th>Relationship</th><th>From Node</th><th>To Node</th><th>Cardinality</th><th>Derived From</th></tr>
+        <tr><td>1</td><td><code>HAS_ARM</code></td><td>Protocol</td><td>StudyArm</td><td>1:N</td><td>studyDesignData.studyArms[]</td></tr>
+        <tr><td>2</td><td><code>HAS_EPOCH</code></td><td>Protocol</td><td>StudyEpoch</td><td>1:N</td><td>studyDesignData.studyEpochs[]</td></tr>
+        <tr><td>3</td><td><code>HAS_ELEMENT</code></td><td>Protocol</td><td>StudyElement</td><td>1:N</td><td>studyDesignData.studyElements[]</td></tr>
+        <tr><td>4</td><td><code>HAS_CELL</code></td><td>Protocol</td><td>StudyCell</td><td>1:N</td><td>studyDesignData.studyCells[]</td></tr>
+        <tr><td>5</td><td><code>HAS_MARKER</code></td><td>Protocol</td><td>StudyMarker</td><td>1:N</td><td>studyDesignData.studyMarkers[]</td></tr>
+        <tr><td>6</td><td><code>HAS_FLOW_OVERRIDE</code></td><td>Protocol</td><td>StudyFlowOverride</td><td>1:N</td><td>studyDesignData.studyFlowOverrides[]</td></tr>
+        <tr><td>7</td><td><code>HAS_ENCOUNTER</code></td><td>Protocol</td><td>Encounter</td><td>1:N</td><td>studyDesignData.encounters[]</td></tr>
+        <tr><td>8</td><td><code>HAS_ACTIVITY</code></td><td>Protocol</td><td>Activity</td><td>1:N</td><td>studyDesignData.activities[]</td></tr>
+        <tr><td>9</td><td><code>HAS_TIMELINE</code></td><td>Protocol</td><td>ScheduleTimeline</td><td>1:N</td><td>studyDesignData.scheduleTimelines[]</td></tr>
+        <tr><td>10</td><td><code>HAS_SOA_GROUP</code></td><td>Protocol</td><td>SoaGroup</td><td>1:N</td><td>studyDesignData.soaGroups[]</td></tr>
+        <tr><td>11</td><td><code>HAS_ACTIVITY_GROUP</code></td><td>Protocol</td><td>ActivityGroup</td><td>1:N</td><td>studyDesignData.activityGroups[]</td></tr>
+        <tr><td>12</td><td><code>HAS_OBJECTIVE</code></td><td>Protocol</td><td>Objective</td><td>1:N</td><td>studyDesignData.objectives[]</td></tr>
+        <tr><td>13</td><td><code>HAS_CRITERION</code></td><td>Protocol</td><td>EligibilityCriterion</td><td>1:N</td><td>studyDesignData.eligibilityCriteria</td></tr>
+        <tr><td>14</td><td><code>HAS_INDICATION</code></td><td>Protocol</td><td>Indication</td><td>1:N</td><td>USDM export</td></tr>
+        <tr><td>15</td><td><code>HAS_INTERVENTION</code></td><td>Protocol</td><td>InvestigationalIntervention</td><td>1:N</td><td>USDM export</td></tr>
+        <tr><td>16</td><td><code>REFERENCES_TRIAL</code></td><td>Protocol</td><td>ReferenceTrial</td><td>1:N</td><td>protocol.reference_trials[]</td></tr>
+        <tr><td colspan="6" style="background:#161b22; color:#58a6ff; font-weight:600">Study Design Relationships</td></tr>
+        <tr><td>17</td><td><code>IN_ARM</code></td><td>StudyCell</td><td>StudyArm</td><td>N:1</td><td>cell.armId</td></tr>
+        <tr><td>18</td><td><code>IN_EPOCH</code></td><td>StudyCell</td><td>StudyEpoch</td><td>N:1</td><td>cell.epochId</td></tr>
+        <tr><td>19</td><td><code>CONTAINS_ELEMENT</code></td><td>StudyCell</td><td>StudyElement</td><td>N:M</td><td>cell.elementIds[]</td></tr>
+        <tr><td>20</td><td><code>NEXT_EPOCH</code></td><td>StudyEpoch</td><td>StudyEpoch</td><td>1:1</td><td>epoch.nextEpochId</td></tr>
+        <tr><td>21</td><td><code>AFTER_EPOCH</code></td><td>StudyMarker</td><td>StudyEpoch</td><td>N:1</td><td>marker.afterEpochId</td></tr>
+        <tr><td>22</td><td><code>FROM_ARM</code></td><td>StudyFlowOverride</td><td>StudyArm</td><td>N:1</td><td>override.fromArmId</td></tr>
+        <tr><td>23</td><td><code>FROM_EPOCH</code></td><td>StudyFlowOverride</td><td>StudyEpoch</td><td>N:1</td><td>override.fromEpochId</td></tr>
+        <tr><td>24</td><td><code>TO_ARM</code></td><td>StudyFlowOverride</td><td>StudyArm</td><td>N:1</td><td>override.toArmId</td></tr>
+        <tr><td>25</td><td><code>USES_INTERVENTION</code></td><td>StudyElement</td><td>InvestigationalIntervention</td><td>N:M</td><td>element.studyInterventionIds[]</td></tr>
+        <tr><td colspan="6" style="background:#161b22; color:#8957e5; font-weight:600">Schedule / SOA Relationships</td></tr>
+        <tr><td>26</td><td><code>IN_EPOCH</code></td><td>Encounter</td><td>StudyEpoch</td><td>N:1</td><td>encounter.epochId</td></tr>
+        <tr><td>27</td><td><code>NEXT_ENCOUNTER</code></td><td>Encounter</td><td>Encounter</td><td>1:1</td><td>encounter.nextEncounterId</td></tr>
+        <tr><td>28</td><td><code>DEFINES_PROCEDURE</code></td><td>Activity</td><td>Procedure</td><td>1:N</td><td>activity.definedProcedures[]</td></tr>
+        <tr><td>29</td><td><code>NEXT_ACTIVITY</code></td><td>Activity</td><td>Activity</td><td>1:1</td><td>activity.nextActivityId</td></tr>
+        <tr><td>30</td><td><code>IN_ACTIVITY_GROUP</code></td><td>Activity</td><td>ActivityGroup</td><td>N:1</td><td>activity.activityGroupId</td></tr>
+        <tr><td>31</td><td><code>IN_SOA_GROUP</code></td><td>Activity</td><td>SoaGroup</td><td>N:1</td><td>activity.soaGroupId (shortcut)</td></tr>
+        <tr><td>32</td><td><code>BELONGS_TO_SOA</code></td><td>ActivityGroup</td><td>SoaGroup</td><td>N:1</td><td>activityGroup.soaGroupId</td></tr>
+        <tr><td>33</td><td><code>HAS_INSTANCE</code></td><td>ScheduleTimeline</td><td>ScheduledActivityInstance</td><td>1:N</td><td>timeline.instances[]</td></tr>
+        <tr><td>34</td><td><code>HAS_TIMING</code></td><td>ScheduleTimeline</td><td>Timing</td><td>1:N</td><td>timeline.timings[]</td></tr>
+        <tr><td>35</td><td><code>FOR_ACTIVITY</code></td><td>ScheduledActivityInstance</td><td>Activity</td><td>N:M</td><td>instance.activityIds[]</td></tr>
+        <tr><td>36</td><td><code>AT_ENCOUNTER</code></td><td>ScheduledActivityInstance</td><td>Encounter</td><td>N:1</td><td>instance.encounterId</td></tr>
+        <tr><td>37</td><td><code>IN_EPOCH</code></td><td>ScheduledActivityInstance</td><td>StudyEpoch</td><td>N:1</td><td>instance.epochId</td></tr>
+        <tr><td>38</td><td><code>RELATIVE_FROM</code></td><td>Timing</td><td>ScheduledActivityInstance</td><td>N:1</td><td>timing.relativeFromScheduledInstanceId</td></tr>
+        <tr><td>39</td><td><code>RELATIVE_TO</code></td><td>Timing</td><td>ScheduledActivityInstance</td><td>N:1</td><td>timing.relativeToScheduledInstanceId</td></tr>
+        <tr><td colspan="6" style="background:#161b22; color:#d29922; font-weight:600">Objectives Relationships</td></tr>
+        <tr><td>40</td><td><code>HAS_ENDPOINT</code></td><td>Objective</td><td>Endpoint</td><td>1:N</td><td>objective.endpoints[]</td></tr>
+        <tr><td>41</td><td><code>FOR_OBJECTIVE</code></td><td>Estimand</td><td>Objective</td><td>N:1</td><td>estimand.objectiveId</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2>6. How SQLite Maps to Neo4j</h2>
+    <!-- ============================================================ -->
+    <div class="diagram-container">
+        <pre class="mermaid">
+graph LR
+    subgraph "SQLite (Before)"
+        direction TB
+        DB["protocols table"]
+        COL1["id"]
+        COL2["protocol_number"]
+        COL3["phase"]
+        COL4["study_design_data<br/><i>ONE giant JSON blob<br/>with ALL entities</i>"]
+        COL5["reference_trials<br/><i>JSON array</i>"]
+        DB --- COL1
+        DB --- COL2
+        DB --- COL3
+        DB --- COL4
+        DB --- COL5
+    end
+
+    subgraph "Neo4j (After)"
+        direction TB
+        NP["Protocol node"]
+        NA["StudyArm nodes"]
+        NE["StudyEpoch nodes"]
+        NC["StudyCell nodes"]
+        NENC["Encounter nodes"]
+        NACT["Activity nodes"]
+        NINST["Instance nodes"]
+        NP -->|"HAS_ARM"| NA
+        NP -->|"HAS_EPOCH"| NE
+        NP -->|"HAS_CELL"| NC
+        NP -->|"HAS_ENCOUNTER"| NENC
+        NP -->|"HAS_ACTIVITY"| NACT
+        NC -->|"IN_ARM"| NA
+        NC -->|"IN_EPOCH"| NE
+        NINST -->|"FOR_ACTIVITY"| NACT
+        NINST -->|"AT_ENCOUNTER"| NENC
+    end
+
+    COL4 -.->|"Exploded into<br/>nodes + edges"| NP
+
+    style COL4 fill:#da3633,stroke:#f85149,color:#fff
+    style NP fill:#238636,stroke:#3fb950,color:#fff
+        </pre>
+    </div>
+
+    <h2>7. Node Properties Reference</h2>
+    <table>
+        <tr><th>Node Label</th><th>Key Properties</th><th>Constraint</th></tr>
+        <tr><td><code>Protocol</code></td><td>id, protocolNumber, shortTitle, fullTitle, phase, studyType, therapeuticArea, indication, sponsorName, status, version, sampleSize, createdAt, updatedAt</td><td>UNIQUE(id), UNIQUE(protocolNumber)</td></tr>
+        <tr><td><code>StudyArm</code></td><td>id, name, description, typeCode, typeDecode, order</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>StudyEpoch</code></td><td>id, name, description, typeCode, typeDecode, order</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>StudyElement</code></td><td>id, name, description, color, transitionStartRule, transitionEndRule</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>StudyCell</code></td><td>id</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>StudyMarker</code></td><td>id, type, label, ratio, description</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>StudyFlowOverride</code></td><td>id, key</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>Encounter</code></td><td>id, name, description, typeCode, label, order, week, studyDay, visitWindow</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>Activity</code></td><td>id, name, description, sdtmDomain, categoryCode, uiCategory, catalogId, nciCode, cdiscCategories[], synonyms[]</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>Procedure</code></td><td>id, name, description, procedureType</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>ScheduleTimeline</code></td><td>id, name, description, mainTimeline, entryCondition</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>ScheduledActivityInstance</code></td><td>id, defaultConditionId</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>Timing</code></td><td>id, typeCode, value, windowLower, windowUpper, windowLabel</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>SoaGroup</code></td><td>id, name, order, colorBg, colorText, colorBorder</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>ActivityGroup</code></td><td>id, name, order</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>Objective</code></td><td>id, name, description, levelCode, levelDecode</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>Endpoint</code></td><td>id, name, description, purpose, levelCode, levelDecode</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>Estimand</code></td><td>id, name, treatment, summaryMeasure, population, variableOfInterest</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>EligibilityCriterion</code></td><td>id, name, text, category, order</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>Indication</code></td><td>id, name, description</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>InvestigationalIntervention</code></td><td>id, name, description, administrationRoute, formulation</td><td>UNIQUE(id)</td></tr>
+        <tr><td><code>ReferenceTrial</code></td><td>nctId, briefTitle, officialTitle, conditions[], phase, sponsor, enrollment</td><td>UNIQUE(nctId)</td></tr>
+    </table>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#1f6feb',
+                primaryTextColor: '#c9d1d9',
+                primaryBorderColor: '#58a6ff',
+                lineColor: '#8b949e',
+                secondaryColor: '#238636',
+                tertiaryColor: '#161b22',
+                fontSize: '14px'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

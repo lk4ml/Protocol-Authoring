@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "id": "PSYCHIATRY",
+    "name": "Psychiatry",
+    "description": "Indication profile for psychiatry and mental health trials. Adds clinician-rated scales, patient-reported outcomes, and cognitive assessments. Extends the default profile.",
+    "version": "1.0.0"
+  },
+
+  "conditionSignals": [
+    "depression", "schizophrenia", "bipolar", "anxiety disorder",
+    "psychiatric", "major depressive", "obsessive compulsive",
+    "ptsd", "adhd", "eating disorder", "substance use disorder",
+    "insomnia", "psychosis"
+  ],
+
+  "additionalOutcomeSignals": {
+    "QS_PSYCH": ["madrs", "ham-d", "phq-9", "panss", "cgi",
+                 "bdi", "gad-7", "ymrs", "bprs"]
+  },
+
+  "additionalOutcomeToSearch": {
+    "QS_PSYCH": ["MADRS", "PHQ-9", "PANSS", "HAM-D"]
+  },
+
+  "additionalEligibilitySignals": {
+    "madrs":       ["MADRS"],
+    "ham-d":       ["HAM-D"],
+    "phq-9":       ["PHQ-9"],
+    "panss":       ["PANSS"],
+    "suicidality": ["C-SSRS"]
+  },
+
+  "additionalProAbbreviations": [
+    "madrs", "ham-d", "ham-a", "phq-9", "gad-7",
+    "panss", "bdi-ii", "ymrs", "bprs", "cgi-s", "cgi-i",
+    "c-ssrs", "psqi", "isi", "shaps", "qids-sr",
+    "sf-36", "eq-5d-5l"
+  ],
+
+  "visitTemplates": {
+    "PHASE2":  [1, 2, 4, 6, 8, 12],
+    "PHASE3":  [1, 2, 4, 6, 8, 12, 16, 24],
+    "DEFAULT": [2, 4, 8, 12, 24]
+  }
+}

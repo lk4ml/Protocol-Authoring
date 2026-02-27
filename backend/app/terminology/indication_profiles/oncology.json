@@ -1,0 +1,53 @@
+{
+  "_meta": {
+    "id": "ONCOLOGY",
+    "name": "Oncology",
+    "description": "Indication profile for oncology trials. Adds tumor assessment, RECIST, biomarker, and survival endpoints. Extends the default profile.",
+    "version": "1.0.0"
+  },
+
+  "conditionSignals": [
+    "cancer", "tumor", "tumour", "carcinoma", "melanoma",
+    "lymphoma", "leukemia", "sarcoma", "myeloma", "neoplasm",
+    "malignant", "metastatic", "nsclc", "glioblastoma",
+    "oncology", "solid tumor"
+  ],
+
+  "additionalExcludePatterns": [],
+
+  "additionalOutcomeSignals": {
+    "RS":   ["recist", "tumor response", "disease response", "objective response",
+             "complete response", "partial response", "stable disease"],
+    "SURV": ["overall survival", "progression-free survival", "pfs", "os",
+             "duration of response", "dor", "time to progression"],
+    "GF":   ["pd-l1", "ctdna", "tumor mutation burden", "tmb",
+             "circulating tumor", "microsatellite"]
+  },
+
+  "additionalOutcomeToSearch": {
+    "RS":   ["Tumor Identification", "Disease Response Assessment",
+             "RECIST Response"],
+    "SURV": ["Tumor Identification", "Disease Response Assessment"],
+    "GF":   ["Tumor Mutation Burden", "Biomarker"]
+  },
+
+  "additionalEligibilitySignals": {
+    "recist":              ["Tumor Identification", "Disease Response"],
+    "measurable disease":  ["Tumor Identification"],
+    "biopsy":              ["Biopsy Procedure"],
+    "pd-l1":               ["Tumor Mutation Burden"]
+  },
+
+  "additionalProAbbreviations": [
+    "eortc qlq-c30", "eortc qlq-lc13", "eortc qlq-br23",
+    "fact-m", "fact-g", "fact-l", "fact-b", "fact-p",
+    "fksi-19", "fksi-drs"
+  ],
+
+  "visitTemplates": {
+    "PHASE1":  [1, 2, 3, 4, 6, 8],
+    "PHASE2":  [3, 6, 9, 12, 15, 18, 21, 24],
+    "PHASE3":  [3, 6, 9, 12, 18, 24, 36, 48],
+    "DEFAULT": [3, 6, 9, 12, 18, 24, 36, 48]
+  }
+}

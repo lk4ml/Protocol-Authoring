@@ -24,6 +24,49 @@ function autoAssignHierarchy(activity, soaHierarchy) {
   return { ...activity, soaGroupId, activityGroupId };
 }
 
+/**
+ * Normalize a schedule instance to canonical schema.
+ *
+ * Canonical: { activityIds: [string], defaultConditionId: string }
+ * Legacy:    { activityId: string, conditionality: string }
+ *
+ * This ensures the frontend always uses canonical form regardless of
+ * what the backend returns (backward compat with old data).
+ */
+function normalizeInstance(inst) {
+  const normalized = { ...inst };
+
+  // activityId (singular) -> activityIds (list)
+  if (!normalized.activityIds && normalized.activityId) {
+    normalized.activityIds = [normalized.activityId];
+    delete normalized.activityId;
+  }
+  if (!normalized.activityIds) {
+    normalized.activityIds = [];
+  }
+
+  // conditionality -> defaultConditionId
+  if (!normalized.defaultConditionId && normalized.conditionality) {
+    normalized.defaultConditionId = normalized.conditionality;
+    delete normalized.conditionality;
+  }
+  if (!normalized.defaultConditionId) {
+    normalized.defaultConditionId = 'mandatory';
+  }
+
+  return normalized;
+}
+
+/**
+ * Check if an instance matches a given activityId + encounterId.
+ */
+function instanceMatches(inst, activityId, encounterId) {
+  if (inst.encounterId !== encounterId) return false;
+  // Canonical: activityIds (list)
+  if (Array.isArray(inst.activityIds) && inst.activityIds.includes(activityId)) return true;
+  return false;
+}
+
 const useScheduleStore = create((set, get) => ({
   // -----------------------------------------------------------------------
   // State
@@ -43,16 +86,23 @@ const useScheduleStore = create((set, get) => ({
 
   /**
    * Load schedule data from the backend.
-   * If soaGroups/activityGroups aren't persisted yet, initialize from hierarchy terminology.
+   * Normalizes all instances to canonical schema on load.
    */
   loadSchedule: async (protocolId) => {
     set({ loading: true });
     try {
       const data = await scheduleApi.getSchedule(protocolId);
+
+      // Normalize all timeline instances to canonical form
+      const timelines = (data.scheduleTimelines || []).map((tl) => ({
+        ...tl,
+        instances: (tl.instances || []).map(normalizeInstance),
+      }));
+
       set({
         encounters: data.encounters || [],
         activities: data.activities || [],
-        timelines: data.scheduleTimelines || [],
+        timelines,
         soaGroups: data.soaGroups || [],
         activityGroups: data.activityGroups || [],
         dirty: false,
@@ -66,7 +116,6 @@ const useScheduleStore = create((set, get) => ({
 
   /**
    * Initialize SOA hierarchy from terminology if not already persisted.
-   * Called after both loadSchedule and terminology are loaded.
    */
   initHierarchyFromTerminology: (soaHierarchy) => {
     const { soaGroups, activityGroups } = get();
@@ -79,9 +128,6 @@ const useScheduleStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Toggle collapse state for a group (SOA group or activity group).
-   */
   toggleCollapse: (groupId) => {
     set((state) => ({
       collapsedGroups: {
@@ -91,14 +137,8 @@ const useScheduleStore = create((set, get) => ({
     }));
   },
 
-  /**
-   * Expand all groups.
-   */
   expandAll: () => set({ collapsedGroups: {} }),
 
-  /**
-   * Collapse all groups.
-   */
   collapseAll: () => {
     const { soaGroups, activityGroups } = get();
     const collapsed = {};
@@ -107,9 +147,6 @@ const useScheduleStore = create((set, get) => ({
     set({ collapsedGroups: collapsed });
   },
 
-  /**
-   * Reorder SOA groups.
-   */
   reorderSoaGroups: (orderedIds) => {
     set((state) => ({
       soaGroups: orderedIds.map((id, i) => {
@@ -120,9 +157,6 @@ const useScheduleStore = create((set, get) => ({
     }));
   },
 
-  /**
-   * Reorder activity groups within a SOA group.
-   */
   reorderActivityGroups: (soaGroupId, orderedIds) => {
     set((state) => ({
       activityGroups: state.activityGroups.map(g => {
@@ -134,9 +168,6 @@ const useScheduleStore = create((set, get) => ({
     }));
   },
 
-  /**
-   * Move an activity to a different activity group (and SOA group).
-   */
   moveActivity: (activityId, targetGroupId, targetSoaGroupId) => {
     set((state) => ({
       activities: state.activities.map(a =>
@@ -216,7 +247,7 @@ const useScheduleStore = create((set, get) => ({
     return newActivities;
   },
 
-  applyPattern: (activityIds, encounterIds, conditionality = 'mandatory') => {
+  applyPattern: (activityIds, encounterIds, defaultConditionId = 'mandatory') => {
     set((state) => {
       let timelines = [...state.timelines];
 
@@ -236,20 +267,16 @@ const useScheduleStore = create((set, get) => ({
 
       activityIds.forEach((activityId) => {
         encounterIds.forEach((encounterId) => {
-          const exists = instances.some((inst) => {
-            const matchEnc = inst.encounterId === encounterId;
-            const matchAct =
-              inst.activityId === activityId ||
-              (Array.isArray(inst.activityIds) && inst.activityIds.includes(activityId));
-            return matchEnc && matchAct;
-          });
+          const exists = instances.some((inst) =>
+            instanceMatches(inst, activityId, encounterId)
+          );
 
           if (!exists) {
             instances.push({
               id: crypto.randomUUID(),
-              activityId,
+              activityIds: [activityId],
               encounterId,
-              conditionality,
+              defaultConditionId,
             });
           }
         });
@@ -268,7 +295,7 @@ const useScheduleStore = create((set, get) => ({
       timelines: state.timelines.map((tl) => ({
         ...tl,
         instances: (tl.instances || []).filter(
-          (inst) => inst.activityId !== actId
+          (inst) => !(Array.isArray(inst.activityIds) && inst.activityIds.includes(actId))
         ),
       })),
       dirty: true,
@@ -302,26 +329,23 @@ const useScheduleStore = create((set, get) => ({
       const timeline = { ...timelines[0] };
       const instances = [...(timeline.instances || [])];
 
-      const idx = instances.findIndex((inst) => {
-        const matchEnc = inst.encounterId === encounterId;
-        const matchAct =
-          inst.activityId === activityId ||
-          (Array.isArray(inst.activityIds) && inst.activityIds.includes(activityId));
-        return matchEnc && matchAct;
-      });
+      const idx = instances.findIndex((inst) =>
+        instanceMatches(inst, activityId, encounterId)
+      );
 
       if (idx === -1) {
+        // Add new instance (canonical form)
         instances.push({
           id: crypto.randomUUID(),
-          activityId,
+          activityIds: [activityId],
           encounterId,
-          conditionality: 'mandatory',
+          defaultConditionId: 'mandatory',
         });
       } else {
         const current = instances[idx];
-        const currentCond = current.conditionality || current.defaultConditionId || 'mandatory';
+        const currentCond = current.defaultConditionId || 'mandatory';
         if (currentCond === 'mandatory') {
-          instances[idx] = { ...current, conditionality: 'conditional', defaultConditionId: undefined };
+          instances[idx] = { ...current, defaultConditionId: 'conditional' };
         } else {
           instances.splice(idx, 1);
         }

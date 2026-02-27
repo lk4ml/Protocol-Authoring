@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "id": "CARDIOVASCULAR",
+    "name": "Cardiovascular",
+    "description": "Indication profile for cardiovascular trials. Adds cardiac monitoring, MACE endpoints, and hemodynamic assessments. Extends the default profile.",
+    "version": "1.0.0"
+  },
+
+  "conditionSignals": [
+    "cardiovascular", "heart failure", "myocardial",
+    "hypertension", "atrial fibrillation", "coronary",
+    "stroke", "arrhythmia", "cardiac", "angina",
+    "peripheral artery", "deep vein thrombosis", "pulmonary embolism"
+  ],
+
+  "additionalExcludePatterns": [],
+
+  "additionalOutcomeSignals": {
+    "EG":      ["ecg", "electrocardiogram", "qtc", "qt interval", "holter",
+                "arrhythmia", "atrial fibrillation"],
+    "PR_ECHO": ["echocardiogram", "lvef", "ejection fraction", "cardiac output",
+                "left ventricular"],
+    "VS_BP":   ["blood pressure", "systolic", "diastolic", "ambulatory bp",
+                "24-hour bp"]
+  },
+
+  "additionalOutcomeToSearch": {
+    "EG":      ["Electrocardiogram", "ECG Measurement", "Holter ECG"],
+    "PR_ECHO": ["Echocardiogram", "Ejection Fraction"],
+    "VS_BP":   ["Blood Pressure", "Systolic Blood Pressure"]
+  },
+
+  "additionalEligibilitySignals": {
+    "ejection fraction":   ["Echocardiogram"],
+    "lvef":                ["Echocardiogram"],
+    "nyha":                ["Heart Failure Classification"],
+    "cardiac history":     ["Electrocardiogram"],
+    "blood pressure":      ["Blood Pressure"]
+  },
+
+  "additionalProAbbreviations": [
+    "kccq", "kccq-12", "mlhfq", "sf-36", "eq-5d-5l",
+    "rose dyspnea", "6mwt", "seattle angina"
+  ],
+
+  "visitTemplates": {
+    "PHASE1":  [1, 2, 4, 6, 8],
+    "PHASE2":  [2, 4, 8, 12, 16, 24],
+    "PHASE3":  [4, 8, 12, 24, 36, 48, 72, 96],
+    "DEFAULT": [4, 8, 12, 24, 48]
+  }
+}

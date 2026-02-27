@@ -10,11 +10,12 @@ Also provides SOA auto-population from NCT trial data.
 import httpx
 from fastapi import APIRouter, HTTPException
 
+from ..config import settings
 from ..services.soa_mapper import build_suggested_soa
 
 router = APIRouter()
 
-CT_GOV_BASE = "https://clinicaltrials.gov/api/v2"
+CT_GOV_BASE = settings.CTGOV_BASE_URL
 
 
 async def _fetch_study_raw(nct_id: str) -> dict:

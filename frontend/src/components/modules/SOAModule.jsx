@@ -30,11 +30,10 @@ const ACTIVITY_CATEGORIES = [
 function getCellDisplay(instances, activityId, encounterId) {
   if (!instances) return null;
   const instance = instances.find((inst) => {
-    const matchEnc = inst.encounterId === encounterId;
-    const matchAct =
-      inst.activityId === activityId ||
-      (Array.isArray(inst.activityIds) && inst.activityIds.includes(activityId));
-    return matchEnc && matchAct;
+    if (inst.encounterId !== encounterId) return false;
+    // Canonical: activityIds (list)
+    if (Array.isArray(inst.activityIds) && inst.activityIds.includes(activityId)) return true;
+    return false;
   });
   return instance || null;
 }
@@ -353,7 +352,7 @@ export default function SOAModule() {
     activities.forEach((act) => {
       if (act.instances) {
         act.instances.forEach((inst) =>
-          all.push({ ...inst, activityId: act.id || act._id })
+          all.push({ ...inst, activityIds: inst.activityIds || [act.id || act._id] })
         );
       }
     });
@@ -472,8 +471,8 @@ export default function SOAModule() {
   function renderCellContent(activityId, encounterId) {
     const instance = getCellDisplay(instances, activityId, encounterId);
     if (!instance) return null;
-    const cond = instance.conditionality || instance.defaultConditionId || 'mandatory';
-    if (cond === 'conditional' || instance.condition || instance.type === 'conditional') {
+    const cond = instance.defaultConditionId || 'mandatory';
+    if (cond === 'conditional') {
       return 'conditional';
     }
     return 'mandatory';

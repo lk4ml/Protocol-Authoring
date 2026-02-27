@@ -54,7 +54,7 @@ export default function Header() {
    */
   function handleExport(format) {
     setExportOpen(false);
-    const baseUrl = 'http://localhost:8001/api';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     if (format === 'usdm') {
       window.open(`${baseUrl}/protocols/${protocolId}/export/usdm`, '_blank');
     } else if (format === 'ich-m11') {

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrialForge vs OpenStudyBuilder — Neo4j Schema Comparison</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117; --card: #161b22; --border: #30363d;
+            --text: #c9d1d9; --muted: #8b949e; --blue: #58a6ff;
+            --purple: #d2a8ff; --green: #3fb950; --orange: #f0883e;
+            --red: #f85149; --yellow: #e3b341; --cyan: #39d353;
+            --tf-accent: #58a6ff; --osb-accent: #f0883e;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.5; }
+        h1 { color: var(--blue); text-align: center; margin-bottom: 4px; }
+        h2 { color: var(--purple); margin-top: 48px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        h3 { color: var(--cyan); margin-top: 24px; }
+        .subtitle { text-align: center; color: var(--muted); margin-bottom: 24px; }
+
+        /* Stats bar */
+        .stats { display: flex; gap: 16px; justify-content: center; margin: 24px 0; flex-wrap: wrap; }
+        .stat { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; text-align: center; min-width: 120px; }
+        .stat-num { font-size: 28px; font-weight: 700; }
+        .stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-tf .stat-num { color: var(--tf-accent); }
+        .stat-osb .stat-num { color: var(--osb-accent); }
+
+        /* Comparison grid */
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .compare-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .compare-card.tf { border-top: 3px solid var(--tf-accent); }
+        .compare-card.osb { border-top: 3px solid var(--osb-accent); }
+        .card-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+        .card-title.tf { color: var(--tf-accent); }
+        .card-title.osb { color: var(--osb-accent); }
+
+        /* Tables */
+        table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+        th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+        th { background: var(--card); color: var(--blue); position: sticky; top: 0; }
+        td { color: var(--text); }
+        tr:nth-child(even) { background: rgba(22, 27, 34, 0.5); }
+        tr:hover { background: rgba(88, 166, 255, 0.05); }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .badge-match { background: #238636; color: #3fb950; }
+        .badge-tf { background: #1f6feb33; color: #58a6ff; }
+        .badge-osb { background: #f0883e33; color: #f0883e; }
+        .badge-gap { background: #f8514933; color: #f85149; }
+        .badge-partial { background: #e3b34133; color: #e3b341; }
+        .badge-design { background: #23863622; color: #3fb950; }
+        .badge-soa { background: #8b5cf622; color: #a78bfa; }
+        .badge-ct { background: #e3b34122; color: #e3b341; }
+        .badge-audit { background: #f8514922; color: #f85149; }
+
+        /* Diagram container */
+        .diagram-container { background: var(--card); border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid var(--border); overflow-x: auto; }
+
+        /* Key insight boxes */
+        .insight { background: var(--card); border-left: 4px solid var(--yellow); border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 16px 0; }
+        .insight-title { color: var(--yellow); font-weight: 700; margin-bottom: 4px; }
+
+        /* Lists */
+        ul { padding-left: 20px; }
+        li { margin-bottom: 4px; }
+        code { background: var(--card); padding: 2px 6px; border-radius: 4px; color: var(--orange); font-size: 13px; }
+
+        /* Node list */
+        .node-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+        .node-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; font-size: 12px; font-family: monospace; }
+        .node-chip.shared { border-color: var(--green); color: var(--green); }
+        .node-chip.tf-only { border-color: var(--tf-accent); color: var(--tf-accent); }
+        .node-chip.osb-only { border-color: var(--osb-accent); color: var(--osb-accent); }
+
+        /* Tabs */
+        .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+        .tab { padding: 8px 20px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Full width diagram */
+        .full-width { grid-column: 1 / -1; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .compare-grid { grid-template-columns: 1fr; }
+        }
+
+        .layer-header { color: var(--purple); font-size: 16px; font-weight: 600; margin: 24px 0 8px; padding: 8px 12px; background: rgba(210, 168, 255, 0.05); border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+<h1>TrialForge vs OpenStudyBuilder</h1>
+<p class="subtitle">Neo4j Graph Schema — Side-by-Side Comparison</p>
+
+<!-- ============================================================ -->
+<!-- STATS -->
+<!-- ============================================================ -->
+<div class="stats">
+    <div class="stat stat-tf"><div class="stat-num">22</div><div class="stat-label">TrialForge Nodes</div></div>
+    <div class="stat stat-osb"><div class="stat-num">94+</div><div class="stat-label">OSB Nodes</div></div>
+    <div class="stat stat-tf"><div class="stat-num">32</div><div class="stat-label">TF Relationships</div></div>
+    <div class="stat stat-osb"><div class="stat-num">200+</div><div class="stat-label">OSB Relationships</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--green)">15</div><div class="stat-label">Shared Concepts</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--red)">6</div><div class="stat-label">Key Gaps</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>1. Architecture Overview</h2>
+<!-- ============================================================ -->
+
+<div class="compare-grid">
+    <div class="compare-card tf">
+        <div class="card-title tf">TrialForge</div>
+        <ul>
+            <li><strong>22 node types</strong> — lean, protocol-centric schema</li>
+            <li><strong>32 relationships</strong> — all entities owned by Protocol hub</li>
+            <li><strong>Flat versioning</strong> — single <code>version</code> field on Protocol</li>
+            <li><strong>No CT layer</strong> — CDISC codes stored as string properties</li>
+            <li><strong>Dual-write</strong> — SQLite primary + Neo4j graph</li>
+            <li><strong>Single-study focus</strong> — each Protocol is independent</li>
+            <li><strong>JSON blob migration</strong> — study_design_data exploded into graph nodes</li>
+        </ul>
+    </div>
+    <div class="compare-card osb">
+        <div class="card-title osb">OpenStudyBuilder</div>
+        <ul>
+            <li><strong>94+ node types</strong> — enterprise schema with full CDISC CT</li>
+            <li><strong>200+ relationships</strong> — cross-study library + versioning edges</li>
+            <li><strong>Root-Value versioning</strong> — every entity has Root node + versioned Value nodes with LATEST_FINAL/LATEST_DRAFT/HAS_VERSION pointers</li>
+            <li><strong>Full CT layer</strong> — all CDISC codelists loaded as graph nodes</li>
+            <li><strong>Neo4j-only</strong> — no SQL database at all</li>
+            <li><strong>Library-first</strong> — shared Activity/Compound/CT concepts across studies</li>
+            <li><strong>Native graph</strong> — built on Neo4j from day one</li>
+        </ul>
+    </div>
+</div>
+
+<div class="insight">
+    <div class="insight-title">Key Architectural Difference</div>
+    TrialForge stores everything under a single Protocol hub node. OpenStudyBuilder separates <strong>library-level concepts</strong> (Activity definitions, Compounds, CT terms) from <strong>study-level instances</strong>, enabling cross-study reuse. OSB's Root-Value pattern means every node has two layers: a stable Root (identity) and versioned Values (state snapshots).
+</div>
+
+<!-- ============================================================ -->
+<h2>2. Side-by-Side Mermaid Diagrams</h2>
+<!-- ============================================================ -->
+
+<div class="compare-grid">
+    <div class="compare-card tf">
+        <div class="card-title tf">TrialForge — Study Design Core</div>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph TD
+    P["Protocol"]:::hub
+    ARM["StudyArm"]:::design
+    EPOCH["StudyEpoch"]:::design
+    ELEM["StudyElement"]:::design
+    CELL["StudyCell"]:::design
+    MARKER["StudyMarker"]:::design
+    FLOW["StudyFlowOverride"]:::design
+    IND["Indication"]:::meta
+    IV["InvestigationalIntervention"]:::meta
+
+    P -->|HAS_ARM| ARM
+    P -->|HAS_EPOCH| EPOCH
+    P -->|HAS_ELEMENT| ELEM
+    P -->|HAS_CELL| CELL
+    P -->|HAS_MARKER| MARKER
+    P -->|HAS_FLOW_OVERRIDE| FLOW
+    P -->|HAS_INDICATION| IND
+    P -->|HAS_INTERVENTION| IV
+
+    CELL -->|IN_ARM| ARM
+    CELL -->|IN_EPOCH| EPOCH
+    CELL -->|CONTAINS_ELEMENT| ELEM
+    EPOCH -->|NEXT_EPOCH| EPOCH
+    MARKER -->|AFTER_EPOCH| EPOCH
+    ELEM -->|USES_INTERVENTION| IV
+
+    classDef hub fill:#1f6feb,stroke:#58a6ff,color:#fff
+    classDef design fill:#238636,stroke:#3fb950,color:#fff
+    classDef meta fill:#8b5cf6,stroke:#a78bfa,color:#fff
+            </pre>
+        </div>
+    </div>
+    <div class="compare-card osb">
+        <div class="card-title osb">OpenStudyBuilder — Study Design Core</div>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph TD
+    SR["StudyRoot"]:::hub
+    SV["StudyValue<br/>(versioned)"]:::hubv
+    ARMR["StudyArmRoot"]:::design
+    ARMV["StudyArmValue"]:::designv
+    EPOCHR["StudyEpochRoot"]:::design
+    EPOCHV["StudyEpochValue"]:::designv
+    ELEMR["StudyElementRoot"]:::design
+    ELEMV["StudyElementValue"]:::designv
+    CELLR["StudyDesignCellRoot"]:::design
+    CELLV["StudyDesignCellValue"]:::designv
+    BRNCH["StudyBranchArmRoot"]:::design
+
+    SR -->|LATEST_FINAL| SV
+    SR -->|HAS_VERSION| SV
+    SR -->|HAS_STUDY_ARM| ARMR
+    ARMR -->|LATEST_VALUE| ARMV
+    ARMR -->|HAS_VERSION| ARMV
+    SR -->|HAS_STUDY_EPOCH| EPOCHR
+    EPOCHR -->|LATEST_VALUE| EPOCHV
+    SR -->|HAS_STUDY_ELEMENT| ELEMR
+    ELEMR -->|LATEST_VALUE| ELEMV
+    SR -->|HAS_STUDY_DESIGN_CELL| CELLR
+    CELLR -->|LATEST_VALUE| CELLV
+    SR -->|HAS_STUDY_BRANCH_ARM| BRNCH
+
+    CELLV -->|HAS_STUDY_ARM| ARMR
+    CELLV -->|HAS_STUDY_EPOCH| EPOCHR
+    CELLV -->|HAS_STUDY_ELEMENT| ELEMR
+
+    classDef hub fill:#da6d25,stroke:#f0883e,color:#fff
+    classDef hubv fill:#8b5200,stroke:#f0883e,color:#fff
+    classDef design fill:#5a3e00,stroke:#e3b341,color:#fff
+    classDef designv fill:#3d2900,stroke:#e3b341,color:#fff
+            </pre>
+        </div>
+    </div>
+</div>
+
+<div class="compare-grid">
+    <div class="compare-card tf">
+        <div class="card-title tf">TrialForge — SOA / Schedule</div>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph TD
+    P["Protocol"]:::hub
+    ENC["Encounter"]:::soa
+    ACT["Activity"]:::soa
+    PROC["Procedure"]:::soa
+    TL["ScheduleTimeline"]:::soa
+    INST["ScheduledActivity<br/>Instance"]:::soa
+    TIM["Timing"]:::soa
+    SOA["SoaGroup"]:::cat
+    AG["ActivityGroup"]:::cat
+
+    P -->|HAS_ENCOUNTER| ENC
+    P -->|HAS_ACTIVITY| ACT
+    P -->|HAS_TIMELINE| TL
+    P -->|HAS_SOA_GROUP| SOA
+    P -->|HAS_ACTIVITY_GROUP| AG
+
+    ACT -->|DEFINES_PROCEDURE| PROC
+    ACT -->|IN_SOA_GROUP| SOA
+    ACT -->|IN_ACTIVITY_GROUP| AG
+    AG -->|BELONGS_TO_SOA| SOA
+
+    TL -->|HAS_INSTANCE| INST
+    TL -->|HAS_TIMING| TIM
+    INST -->|FOR_ACTIVITY| ACT
+    INST -->|AT_ENCOUNTER| ENC
+
+    classDef hub fill:#1f6feb,stroke:#58a6ff,color:#fff
+    classDef soa fill:#8b5cf6,stroke:#a78bfa,color:#fff
+    classDef cat fill:#da3633,stroke:#f85149,color:#fff
+            </pre>
+        </div>
+    </div>
+    <div class="compare-card osb">
+        <div class="card-title osb">OpenStudyBuilder — SOA / Schedule</div>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph TD
+    SR["StudyRoot"]:::hub
+    SVR["StudyVisitRoot"]:::soa
+    SVV["StudyVisitValue"]:::soav
+    SACR["StudyActivityRoot"]:::soa
+    SACV["StudyActivityValue"]:::soav
+    SASCHR["StudyActivity<br/>ScheduleRoot"]:::soa
+    SASCHV["StudyActivity<br/>ScheduleValue"]:::soav
+    ACONR["ActivityConceptRoot<br/>(Library)"]:::lib
+    ACONV["ActivityConceptValue"]:::libv
+    AGROUPR["ActivityGroupRoot"]:::lib
+    ASUBR["ActivitySubGroupRoot"]:::lib
+    AINSTR["ActivityInstanceRoot"]:::lib
+
+    SR -->|HAS_STUDY_VISIT| SVR
+    SVR -->|LATEST_VALUE| SVV
+    SR -->|HAS_STUDY_ACTIVITY| SACR
+    SACR -->|LATEST_VALUE| SACV
+    SR -->|HAS_STUDY_ACTIVITY_SCHEDULE| SASCHR
+    SASCHR -->|LATEST_VALUE| SASCHV
+
+    SASCHV -->|HAS_STUDY_VISIT| SVR
+    SASCHV -->|HAS_STUDY_ACTIVITY| SACR
+
+    SACV -->|HAS_SELECTED_ACTIVITY| ACONR
+    ACONR -->|LATEST_VALUE| ACONV
+    AGROUPR -->|HAS_ACTIVITY_SUBGROUP| ASUBR
+    ASUBR -->|HAS_ACTIVITY| ACONR
+    ACONR -->|HAS_ACTIVITY_INSTANCE| AINSTR
+
+    classDef hub fill:#da6d25,stroke:#f0883e,color:#fff
+    classDef soa fill:#5c3d8f,stroke:#a78bfa,color:#fff
+    classDef soav fill:#3d2760,stroke:#a78bfa,color:#fff
+    classDef lib fill:#0e4429,stroke:#3fb950,color:#fff
+    classDef libv fill:#0a2d1a,stroke:#3fb950,color:#fff
+            </pre>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>3. Node-by-Node Comparison Table</h2>
+<!-- ============================================================ -->
+
+<p>Every domain concept mapped between TrialForge and OpenStudyBuilder:</p>
+
+<div class="layer-header">Study Design Layer</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:20%">Domain Concept</th>
+            <th style="width:25%">TrialForge Node</th>
+            <th style="width:25%">OpenStudyBuilder Node(s)</th>
+            <th style="width:10%">Status</th>
+            <th style="width:20%">Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Study / Protocol</td>
+            <td><code>Protocol</code></td>
+            <td><code>StudyRoot</code> + <code>StudyValue</code></td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>OSB splits identity (Root) from state (Value) for versioning</td>
+        </tr>
+        <tr>
+            <td>Study Arm</td>
+            <td><code>StudyArm</code></td>
+            <td><code>StudyArmRoot</code> + <code>StudyArmValue</code></td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Same concept, OSB adds versioning layer</td>
+        </tr>
+        <tr>
+            <td>Study Epoch</td>
+            <td><code>StudyEpoch</code></td>
+            <td><code>StudyEpochRoot</code> + <code>StudyEpochValue</code></td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>TF uses NEXT_EPOCH chain; OSB uses order property + versioning</td>
+        </tr>
+        <tr>
+            <td>Study Element</td>
+            <td><code>StudyElement</code></td>
+            <td><code>StudyElementRoot</code> + <code>StudyElementValue</code></td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Both link elements to interventions</td>
+        </tr>
+        <tr>
+            <td>Study Cell (Arm &times; Epoch)</td>
+            <td><code>StudyCell</code></td>
+            <td><code>StudyDesignCellRoot</code> + <code>StudyDesignCellValue</code></td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Junction node pattern identical. Both wire to Arm + Epoch + Element(s)</td>
+        </tr>
+        <tr>
+            <td>Randomization Markers</td>
+            <td><code>StudyMarker</code></td>
+            <td>&mdash;</td>
+            <td><span class="badge badge-tf">TF Only</span></td>
+            <td>TF-specific concept for visual randomization markers on design canvas</td>
+        </tr>
+        <tr>
+            <td>Flow Overrides</td>
+            <td><code>StudyFlowOverride</code></td>
+            <td><code>StudyBranchArmRoot</code> + Value</td>
+            <td><span class="badge badge-partial">Partial</span></td>
+            <td>OSB has branch arms with transition rules. TF has simpler flow override model</td>
+        </tr>
+        <tr>
+            <td>Indication</td>
+            <td><code>Indication</code></td>
+            <td><code>StudyIndicationRoot</code> + Value</td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Both store indication/disease. TF has auto-discovered indication profiles</td>
+        </tr>
+        <tr>
+            <td>Intervention</td>
+            <td><code>InvestigationalIntervention</code></td>
+            <td><code>StudyInterventionRoot</code> + Value + <code>StudyCompoundRoot</code> + <code>CompoundRoot</code></td>
+            <td><span class="badge badge-partial">Partial</span></td>
+            <td>OSB has multi-level: Study Intervention &rarr; Study Compound &rarr; Compound (library). TF keeps it flat</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="layer-header">SOA / Schedule Layer</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:20%">Domain Concept</th>
+            <th style="width:25%">TrialForge Node</th>
+            <th style="width:25%">OpenStudyBuilder Node(s)</th>
+            <th style="width:10%">Status</th>
+            <th style="width:20%">Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Visit / Encounter</td>
+            <td><code>Encounter</code></td>
+            <td><code>StudyVisitRoot</code> + <code>StudyVisitValue</code></td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>TF calls it Encounter (USDM). OSB calls it Visit. Same concept</td>
+        </tr>
+        <tr>
+            <td>Activity</td>
+            <td><code>Activity</code></td>
+            <td><code>StudyActivityRoot</code> + Value + <code>ActivityConceptRoot</code> + Value</td>
+            <td><span class="badge badge-partial">Partial</span></td>
+            <td>OSB separates study-level activity from library-level concept. TF merges both</td>
+        </tr>
+        <tr>
+            <td>Procedure</td>
+            <td><code>Procedure</code></td>
+            <td><code>ActivityInstanceRoot</code> + Value</td>
+            <td><span class="badge badge-partial">Partial</span></td>
+            <td>OSB has 4-level hierarchy: Group &rarr; SubGroup &rarr; Activity &rarr; Instance</td>
+        </tr>
+        <tr>
+            <td>Schedule (SOA matrix cell)</td>
+            <td><code>ScheduledActivityInstance</code></td>
+            <td><code>StudyActivityScheduleRoot</code> + Value</td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Both are junction: Activity &times; Visit/Encounter. OSB adds versioning</td>
+        </tr>
+        <tr>
+            <td>Schedule Timeline</td>
+            <td><code>ScheduleTimeline</code></td>
+            <td><code>StudySoARoot</code> (one per SoA tab)</td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Container for schedule instances</td>
+        </tr>
+        <tr>
+            <td>Timing / Window</td>
+            <td><code>Timing</code></td>
+            <td>Properties on <code>StudyVisitValue</code></td>
+            <td><span class="badge badge-partial">Partial</span></td>
+            <td>TF uses standalone Timing nodes. OSB stores timing on Visit values</td>
+        </tr>
+        <tr>
+            <td>SOA Group</td>
+            <td><code>SoaGroup</code></td>
+            <td><code>StudySoAFootnoteRoot</code> (groups via SoA hierarchy)</td>
+            <td><span class="badge badge-partial">Partial</span></td>
+            <td>TF has explicit grouping nodes. OSB uses SoA-level organization</td>
+        </tr>
+        <tr>
+            <td>Activity Group</td>
+            <td><code>ActivityGroup</code></td>
+            <td><code>ActivityGroupRoot</code> + Value (Library)</td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Both group activities. OSB groups are library-level (shared across studies)</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="layer-header">Objectives, Endpoints & Eligibility</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:20%">Domain Concept</th>
+            <th style="width:25%">TrialForge Node</th>
+            <th style="width:25%">OpenStudyBuilder Node(s)</th>
+            <th style="width:10%">Status</th>
+            <th style="width:20%">Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Objective</td>
+            <td><code>Objective</code></td>
+            <td><code>StudyObjectiveRoot</code> + Value + <code>ObjectiveRoot</code> (Library)</td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>OSB separates study-level from library-level objective definitions</td>
+        </tr>
+        <tr>
+            <td>Endpoint</td>
+            <td><code>Endpoint</code></td>
+            <td><code>StudyEndpointRoot</code> + Value + <code>EndpointRoot</code> (Library)</td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Same split. OSB endpoints link to CT terms for unit, timeframe, etc.</td>
+        </tr>
+        <tr>
+            <td>Estimand</td>
+            <td><code>Estimand</code></td>
+            <td><code>StudyEstimandRoot</code> + Value</td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>Both support ICH E9(R1) estimands</td>
+        </tr>
+        <tr>
+            <td>Eligibility Criteria</td>
+            <td><code>EligibilityCriterion</code></td>
+            <td><code>StudyCriteriaRoot</code> + Value + <code>CriteriaRoot</code> (Library)</td>
+            <td><span class="badge badge-match">Match</span></td>
+            <td>OSB has library-level reusable criteria. TF criteria are study-specific</td>
+        </tr>
+        <tr>
+            <td>Reference Trial</td>
+            <td><code>ReferenceTrial</code></td>
+            <td>&mdash;</td>
+            <td><span class="badge badge-tf">TF Only</span></td>
+            <td>TF links to ClinicalTrials.gov via nctId. OSB does not model this</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="layer-header">OSB-Only Layers (Not in TrialForge)</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:20%">Domain Concept</th>
+            <th style="width:25%">OpenStudyBuilder Node(s)</th>
+            <th style="width:10%">Status</th>
+            <th style="width:45%">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Controlled Terminology</td>
+            <td><code>CTCodelistRoot</code> + <code>CTCodelistNameRoot</code> + <code>CTTermRoot</code> + <code>CTTermNameRoot</code> + <code>CTTermAttributeRoot</code> + <code>CTCatalogue</code> + <code>CTPackage</code></td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>Full CDISC CT loaded as graph. Every codelist, term, and attribute is a node. <code>CTTermContext</code> junction tracks which term version applies where.</td>
+        </tr>
+        <tr>
+            <td>Root-Value Versioning</td>
+            <td><code>*Root</code> + <code>*Value</code> with <code>LATEST_DRAFT</code>, <code>LATEST_FINAL</code>, <code>LATEST_RETIRED</code>, <code>HAS_VERSION</code></td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>Every entity has a stable Root (identity) and versioned Value nodes. Pointer relationships track latest draft/final/retired state.</td>
+        </tr>
+        <tr>
+            <td>Activity Concept Hierarchy</td>
+            <td><code>ActivityGroupRoot</code> &rarr; <code>ActivitySubGroupRoot</code> &rarr; <code>ActivityConceptRoot</code> &rarr; <code>ActivityInstanceRoot</code></td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>4-level library hierarchy. Groups &rarr; SubGroups &rarr; Concepts (e.g. "Blood Pressure") &rarr; Instances (e.g. "Systolic BP"). Reusable across studies.</td>
+        </tr>
+        <tr>
+            <td>Audit Trail</td>
+            <td><code>StudyAction</code> (Create/Edit/Delete) with <code>BEFORE</code>/<code>AFTER</code> edges</td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>Every change tracked as a StudyAction node with timestamp, user, and before/after snapshots.</td>
+        </tr>
+        <tr>
+            <td>ODM / CRF Modeling</td>
+            <td><code>OdmForm</code>, <code>OdmItemGroup</code>, <code>OdmItem</code>, <code>OdmCondition</code>, <code>OdmMethod</code></td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>CDISC ODM XML standard modeled as graph. Forms &rarr; Item Groups &rarr; Items with conditions and methods.</td>
+        </tr>
+        <tr>
+            <td>SDTM Dataset Mapping</td>
+            <td><code>DatasetRoot</code>, <code>DatasetScenario</code>, <code>DatasetVariable</code></td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>SDTM domains, scenarios, and variables. Activity instances mapped to SDTM variables for data collection.</td>
+        </tr>
+        <tr>
+            <td>Syntax Templates</td>
+            <td><code>SyntaxTemplateRoot</code> &rarr; <code>SyntaxPreInstanceRoot</code> &rarr; <code>SyntaxInstanceRoot</code></td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>3-tier parameterized text system for objectives, endpoints, criteria. Template &rarr; PreInstance (with defaults) &rarr; Instance (study-specific values).</td>
+        </tr>
+        <tr>
+            <td>Compound / Pharmaceutical</td>
+            <td><code>CompoundRoot</code> + Value, <code>PharmaceuticalProductRoot</code></td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>Library-level drug compounds, formulations, pharmaceutical products. Linked to study interventions.</td>
+        </tr>
+        <tr>
+            <td>Dictionary Terms</td>
+            <td><code>DictionaryTermRoot</code> + Value (MedDRA, SNOMED, etc.)</td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>External medical dictionaries loaded as graph nodes. Linked to indications, conditions.</td>
+        </tr>
+        <tr>
+            <td>Unit Definitions</td>
+            <td><code>UnitDefinitionRoot</code> + Value with <code>UCUMTerm</code></td>
+            <td><span class="badge badge-osb">OSB Only</span></td>
+            <td>UCUM-based unit definitions for measurements. Linked to endpoints, activities.</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2>4. Versioning Pattern Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="compare-grid">
+    <div class="compare-card tf">
+        <div class="card-title tf">TrialForge — Flat Model</div>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph LR
+    P["Protocol<br/>version: '1.0'<br/>status: 'Draft'"]:::hub
+    ARM["StudyArm<br/>id: 'arm-001'<br/>name: 'Treatment A'"]:::design
+
+    P -->|HAS_ARM| ARM
+
+    classDef hub fill:#1f6feb,stroke:#58a6ff,color:#fff
+    classDef design fill:#238636,stroke:#3fb950,color:#fff
+            </pre>
+        </div>
+        <ul>
+            <li>Single node per entity — no history</li>
+            <li>Updates replace properties in-place</li>
+            <li><code>version</code> is a string field on Protocol only</li>
+            <li>No audit trail — previous state is lost</li>
+            <li><strong>Pro:</strong> Simple queries, fast writes</li>
+            <li><strong>Con:</strong> No change tracking or rollback</li>
+        </ul>
+    </div>
+    <div class="compare-card osb">
+        <div class="card-title osb">OpenStudyBuilder — Root-Value Versioning</div>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph LR
+    ROOT["StudyArmRoot<br/>uid: 'arm-001'"]:::root
+    V1["StudyArmValue<br/>version: 1<br/>name: 'Placebo'<br/>status: FINAL"]:::final
+    V2["StudyArmValue<br/>version: 2<br/>name: 'Treatment A'<br/>status: DRAFT"]:::draft
+
+    ROOT -->|HAS_VERSION| V1
+    ROOT -->|HAS_VERSION| V2
+    ROOT -->|LATEST_FINAL| V1
+    ROOT -->|LATEST_DRAFT| V2
+
+    classDef root fill:#da6d25,stroke:#f0883e,color:#fff
+    classDef final fill:#238636,stroke:#3fb950,color:#fff
+    classDef draft fill:#8b5cf6,stroke:#a78bfa,color:#fff
+            </pre>
+        </div>
+        <ul>
+            <li><strong>Root node:</strong> stable identity (never changes)</li>
+            <li><strong>Value nodes:</strong> versioned state snapshots</li>
+            <li><code>LATEST_DRAFT</code> &rarr; current working copy</li>
+            <li><code>LATEST_FINAL</code> &rarr; last approved version</li>
+            <li><code>LATEST_RETIRED</code> &rarr; deprecated version</li>
+            <li><strong>Pro:</strong> Full history, rollback, concurrent edits</li>
+            <li><strong>Con:</strong> 2x nodes, complex queries, garbage collection</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>5. Activity Concept Hierarchy</h2>
+<!-- ============================================================ -->
+
+<div class="compare-grid">
+    <div class="compare-card tf">
+        <div class="card-title tf">TrialForge — Flat Activities</div>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph TD
+    SOA["SoaGroup<br/>'Safety Assessments'"]:::cat
+    AG["ActivityGroup<br/>'Vital Signs'"]:::cat
+    ACT["Activity<br/>'Blood Pressure'<br/>sdtmDomain: 'VS'"]:::act
+    PROC1["Procedure<br/>'Systolic BP'"]:::proc
+    PROC2["Procedure<br/>'Diastolic BP'"]:::proc
+
+    AG -->|BELONGS_TO_SOA| SOA
+    ACT -->|IN_ACTIVITY_GROUP| AG
+    ACT -->|IN_SOA_GROUP| SOA
+    ACT -->|DEFINES_PROCEDURE| PROC1
+    ACT -->|DEFINES_PROCEDURE| PROC2
+
+    classDef cat fill:#da3633,stroke:#f85149,color:#fff
+    classDef act fill:#8b5cf6,stroke:#a78bfa,color:#fff
+    classDef proc fill:#1f6feb,stroke:#58a6ff,color:#fff
+            </pre>
+        </div>
+        <p>2-level: Activity &rarr; Procedure(s). Groups are flat containers.</p>
+    </div>
+    <div class="compare-card osb">
+        <div class="card-title osb">OpenStudyBuilder — 4-Level Library Hierarchy</div>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph TD
+    GRP["ActivityGroupRoot<br/>'Vital Signs'"]:::lib
+    SUB["ActivitySubGroupRoot<br/>'Blood Pressure'"]:::lib
+    CON["ActivityConceptRoot<br/>'Systolic BP'"]:::concept
+    INST["ActivityInstanceRoot<br/>'Systolic BP - Sitting'"]:::inst
+    SDTM["DatasetVariable<br/>'VS.VSORRES'"]:::sdtm
+    CT["CTTermRoot<br/>'SYSBP' (C25298)"]:::ct
+
+    GRP -->|HAS_ACTIVITY_SUBGROUP| SUB
+    SUB -->|HAS_ACTIVITY| CON
+    CON -->|HAS_ACTIVITY_INSTANCE| INST
+    INST -->|HAS_DATASET_VARIABLE| SDTM
+    CON -->|HAS_CT_TERM| CT
+
+    classDef lib fill:#0e4429,stroke:#3fb950,color:#fff
+    classDef concept fill:#1a7f37,stroke:#3fb950,color:#fff
+    classDef inst fill:#238636,stroke:#3fb950,color:#fff
+    classDef sdtm fill:#8b5200,stroke:#e3b341,color:#fff
+    classDef ct fill:#5c3d8f,stroke:#a78bfa,color:#fff
+            </pre>
+        </div>
+        <p>4-level: Group &rarr; SubGroup &rarr; Concept &rarr; Instance. Each level versioned. Concepts link to CT terms and SDTM variables. Library-level = reusable across studies.</p>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>6. Gap Analysis &amp; Roadmap</h2>
+<!-- ============================================================ -->
+
+<table>
+    <thead>
+        <tr>
+            <th style="width:5%">#</th>
+            <th style="width:20%">Gap</th>
+            <th style="width:10%">Priority</th>
+            <th style="width:30%">What OSB Does</th>
+            <th style="width:35%">TrialForge Recommendation</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td><strong>Versioning</strong></td>
+            <td><span class="badge badge-gap">High</span></td>
+            <td>Root-Value pattern with LATEST_DRAFT / LATEST_FINAL / HAS_VERSION pointer relationships on every entity</td>
+            <td>Start with Protocol-level versioning (snapshot entire graph). Add entity-level Root-Value later if needed for concurrent editing.</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><strong>CT Integration</strong></td>
+            <td><span class="badge badge-gap">High</span></td>
+            <td>Full CDISC CT loaded as graph nodes (CTCodelist, CTTerm, CTTermContext). Every coded field links to a CT term node</td>
+            <td>Load CDISC CT as graph nodes during startup. Replace string codes (typeCode, levelCode) with relationships to CTTerm nodes. Start with CT packages used in your active TAs.</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><strong>Activity Library</strong></td>
+            <td><span class="badge badge-partial">Medium</span></td>
+            <td>4-level hierarchy (Group &rarr; SubGroup &rarr; Concept &rarr; Instance) as reusable library, separate from study-level</td>
+            <td>Extract current activities into library nodes. Study activities become references to library concepts. Enables cross-study activity reuse.</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td><strong>Audit Trail</strong></td>
+            <td><span class="badge badge-partial">Medium</span></td>
+            <td>StudyAction nodes (Create/Edit/Delete) with BEFORE/AFTER edges. Full change history with user attribution</td>
+            <td>Add StudyAction nodes on each write. Store timestamp + user + action type. BEFORE/AFTER edges to affected nodes.</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td><strong>ODM / CRF Model</strong></td>
+            <td><span class="badge badge-partial">Medium</span></td>
+            <td>OdmForm, OdmItemGroup, OdmItem, OdmCondition, OdmMethod nodes. Full CRF structure as graph</td>
+            <td>Phase 2+ feature. Map activities &rarr; ODM forms &rarr; item groups &rarr; items. Enables CRF generation from SOA.</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td><strong>SDTM Mapping</strong></td>
+            <td><span class="badge badge-ct">Low</span></td>
+            <td>DatasetRoot, DatasetScenario, DatasetVariable. Activities linked to SDTM domains/variables</td>
+            <td>Leverage existing sdtmDomain property on Activity. Add Dataset nodes + relationships later for full mapping.</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="insight">
+    <div class="insight-title">Strategic Takeaway</div>
+    TrialForge's 22-node schema covers the core protocol authoring workflow effectively. The biggest architectural gaps versus OSB are <strong>versioning</strong> and <strong>CT integration</strong>. Versioning enables regulatory-grade change tracking; CT integration enables proper CDISC compliance. Both are achievable incrementally without redesigning the existing schema — they add new node types and relationship layers on top of what exists.
+</div>
+
+<!-- ============================================================ -->
+<h2>7. Relationship Pattern Comparison</h2>
+<!-- ============================================================ -->
+
+<div class="compare-grid">
+    <div class="compare-card tf">
+        <div class="card-title tf">TrialForge Relationship Patterns</div>
+        <table>
+            <thead><tr><th>Pattern</th><th>Example</th></tr></thead>
+            <tbody>
+                <tr><td>Hub-spoke ownership</td><td><code>(Protocol)-[:HAS_ARM]->(StudyArm)</code></td></tr>
+                <tr><td>Junction node</td><td><code>(StudyCell)-[:IN_ARM]->(Arm)</code><br/><code>(StudyCell)-[:IN_EPOCH]->(Epoch)</code></td></tr>
+                <tr><td>Linked list</td><td><code>(Epoch1)-[:NEXT_EPOCH]->(Epoch2)</code></td></tr>
+                <tr><td>N:M via junction</td><td><code>(Instance)-[:FOR_ACTIVITY]->(Activity)</code></td></tr>
+                <tr><td>Nested entity</td><td><code>(Activity)-[:DEFINES_PROCEDURE]->(Proc)</code></td></tr>
+                <tr><td>Category shortcut</td><td><code>(Activity)-[:IN_SOA_GROUP]->(SoaGroup)</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="compare-card osb">
+        <div class="card-title osb">OpenStudyBuilder Relationship Patterns</div>
+        <table>
+            <thead><tr><th>Pattern</th><th>Example</th></tr></thead>
+            <tbody>
+                <tr><td>Root-Value identity</td><td><code>(ArmRoot)-[:LATEST_VALUE]->(ArmValue)</code></td></tr>
+                <tr><td>Version chain</td><td><code>(Root)-[:HAS_VERSION]->(V1)</code><br/><code>(Root)-[:HAS_VERSION]->(V2)</code></td></tr>
+                <tr><td>Status pointer</td><td><code>(Root)-[:LATEST_DRAFT]->(V2)</code><br/><code>(Root)-[:LATEST_FINAL]->(V1)</code></td></tr>
+                <tr><td>Study-to-Library link</td><td><code>(StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(ActivityConcept)</code></td></tr>
+                <tr><td>CT term reference</td><td><code>(Value)-[:HAS_CT_TERM {rel_type:'phase'}]->(CTTerm)</code></td></tr>
+                <tr><td>Audit edge</td><td><code>(StudyAction)-[:AFTER]->(NewValue)</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>8. Summary Scorecard</h2>
+<!-- ============================================================ -->
+
+<table>
+    <thead>
+        <tr>
+            <th>Capability</th>
+            <th style="text-align:center">TrialForge</th>
+            <th style="text-align:center">OpenStudyBuilder</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>Study Design (Arms/Epochs/Cells/Elements)</td><td style="text-align:center;color:var(--green)">&#10003; Full</td><td style="text-align:center;color:var(--green)">&#10003; Full + Versioned</td></tr>
+        <tr><td>SOA Matrix (Visits &times; Activities)</td><td style="text-align:center;color:var(--green)">&#10003; Full</td><td style="text-align:center;color:var(--green)">&#10003; Full + Versioned</td></tr>
+        <tr><td>Objectives / Endpoints / Estimands</td><td style="text-align:center;color:var(--green)">&#10003; Full</td><td style="text-align:center;color:var(--green)">&#10003; Full + Library</td></tr>
+        <tr><td>Eligibility Criteria</td><td style="text-align:center;color:var(--green)">&#10003; Full</td><td style="text-align:center;color:var(--green)">&#10003; Full + Library</td></tr>
+        <tr><td>Indication Profiles</td><td style="text-align:center;color:var(--green)">&#10003; Auto-discovered</td><td style="text-align:center;color:var(--yellow)">~ Basic</td></tr>
+        <tr><td>ClinicalTrials.gov Integration</td><td style="text-align:center;color:var(--green)">&#10003; ReferenceTrial</td><td style="text-align:center;color:var(--red)">&#10007; None</td></tr>
+        <tr><td>Entity Versioning</td><td style="text-align:center;color:var(--red)">&#10007; None</td><td style="text-align:center;color:var(--green)">&#10003; Root-Value</td></tr>
+        <tr><td>CDISC Controlled Terminology</td><td style="text-align:center;color:var(--yellow)">~ String codes</td><td style="text-align:center;color:var(--green)">&#10003; Full graph</td></tr>
+        <tr><td>Activity Library (cross-study)</td><td style="text-align:center;color:var(--red)">&#10007; None</td><td style="text-align:center;color:var(--green)">&#10003; 4-level</td></tr>
+        <tr><td>Audit Trail</td><td style="text-align:center;color:var(--red)">&#10007; None</td><td style="text-align:center;color:var(--green)">&#10003; StudyAction</td></tr>
+        <tr><td>ODM / CRF Modeling</td><td style="text-align:center;color:var(--red)">&#10007; None</td><td style="text-align:center;color:var(--green)">&#10003; Full</td></tr>
+        <tr><td>SDTM Dataset Mapping</td><td style="text-align:center;color:var(--yellow)">~ sdtmDomain prop</td><td style="text-align:center;color:var(--green)">&#10003; Full</td></tr>
+        <tr><td>Syntax Templates</td><td style="text-align:center;color:var(--red)">&#10007; None</td><td style="text-align:center;color:var(--green)">&#10003; 3-tier</td></tr>
+        <tr><td>Compound/Drug Library</td><td style="text-align:center;color:var(--red)">&#10007; None</td><td style="text-align:center;color:var(--green)">&#10003; Full</td></tr>
+        <tr><td>SQLite Fallback / Graceful Degradation</td><td style="text-align:center;color:var(--green)">&#10003; Dual-write</td><td style="text-align:center;color:var(--red)">&#10007; Neo4j only</td></tr>
+    </tbody>
+</table>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        themeVariables: {
+            primaryColor: '#1f6feb',
+            primaryTextColor: '#c9d1d9',
+            primaryBorderColor: '#30363d',
+            lineColor: '#8b949e',
+            secondaryColor: '#161b22',
+            tertiaryColor: '#0d1117'
+        },
+        flowchart: { curve: 'basis', padding: 15 }
+    });
+</script>
+
+</body>
+</html>
