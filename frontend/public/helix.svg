@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#0f172a"/>
+  <g stroke="white" stroke-width="1.8" stroke-linecap="round">
+    <!-- Left strand -->
+    <path d="M10 5 C10 9, 22 11, 22 16 C22 21, 10 23, 10 27" fill="none"/>
+    <!-- Right strand -->
+    <path d="M22 5 C22 9, 10 11, 10 16 C10 21, 22 23, 22 27" fill="none"/>
+    <!-- Rungs -->
+    <line x1="12.5" y1="8" x2="19.5" y2="8" stroke-opacity="0.6"/>
+    <line x1="11" y1="12" x2="21" y2="12" stroke-opacity="0.6"/>
+    <line x1="11" y1="16" x2="21" y2="16" stroke-opacity="0.6"/>
+    <line x1="11" y1="20" x2="21" y2="20" stroke-opacity="0.6"/>
+    <line x1="12.5" y1="24" x2="19.5" y2="24" stroke-opacity="0.6"/>
+  </g>
+</svg>

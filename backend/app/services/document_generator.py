@@ -31,7 +31,6 @@ from docx.oxml import OxmlElement
 
 if TYPE_CHECKING:
     from docx.table import Table as DocxTable
-    from ..db.tables import ProtocolDB
 
 
 # ---------------------------------------------------------------------------

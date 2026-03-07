@@ -118,7 +118,8 @@ def detect_therapeutic_area(conditions, keywords, interventions, description="",
 # -- Data-driven procedure selection --------------------------------
 
 ICH_M11_CORE_ACTIVITY_GROUPS = {
-    "CONSENT", "DEMOG", "CLINICAL", "LABS", "AE", "IP_ADMIN",
+    "CONSENT", "ELIGIBILITY", "DEMOG", "DISPOSITION",
+    "CLINICAL", "LABS", "AE", "IP_ADMIN",
 }
 
 

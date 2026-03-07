@@ -41,3 +41,26 @@ html {
     radial-gradient(ellipse at 60% 80%, rgba(37, 75, 234, 0.08) 0%, transparent 50%);
   pointer-events: none;
 }
+
+/* ── Landing page hero gradient (light, ProtocolFlow-inspired) ────── */
+.landing-hero-bg {
+  background: linear-gradient(
+    180deg,
+    #f8f9ff 0%,
+    #eef0ff 15%,
+    #e8e4fd 30%,
+    #f0e8fb 45%,
+    #fce8f1 55%,
+    #fdf0f0 65%,
+    #fef6ef 75%,
+    #ffffff 100%
+  );
+}
+
+/* ── Gradient text for hero headline ─────────────────────────────── */
+.landing-gradient-text {
+  background: linear-gradient(135deg, #3b6cf5 0%, #6366f1 35%, #8b5cf6 65%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

@@ -13,9 +13,6 @@ class Settings(BaseSettings):
     # Runtime environment: "development" | "production"
     ENV: str = "development"
 
-    # Database
-    DATABASE_URL: str = "sqlite:///./protocol_authoring.db"
-
     # External services
     CDISC_API_KEY: str = ""
     CDISC_LIBRARY_BASE_URL: str = "https://library.cdisc.org/api"
@@ -27,6 +24,9 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:5173",
     ]
 
     # Neo4j graph database

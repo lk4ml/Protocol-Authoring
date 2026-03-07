@@ -10,11 +10,16 @@ Usage:
 
 Idempotent: Uses MERGE for the Protocol node so it's safe to re-run.
 Child nodes are replaced (delete + create) per protocol.
+
+NOTE: This script directly reads the SQLite file without going through
+the app's Settings (which no longer has DATABASE_URL). It uses the neo4j
+driver via app.graph.
 """
 
 import asyncio
 import json
 import logging
+import sqlite3
 import sys
 import os
 
@@ -24,10 +29,51 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
+# Direct path to the SQLite database
+SQLITE_DB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "protocol_authoring.db"
+)
+
+
+def _read_sqlite_protocols() -> list[dict]:
+    """Read all protocols directly from SQLite without SQLAlchemy."""
+    if not os.path.exists(SQLITE_DB_PATH):
+        logger.warning(f"SQLite database not found: {SQLITE_DB_PATH}")
+        return []
+
+    conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT * FROM protocols ORDER BY updated_at DESC")
+        rows = cursor.fetchall()
+    except sqlite3.OperationalError as e:
+        logger.error(f"SQLite query error: {e}")
+        return []
+    finally:
+        conn.close()
+
+    protocols = []
+    for row in rows:
+        d = dict(row)
+        # Parse JSON columns
+        for json_col in ["study_design_data", "narrative_sections", "reference_trials"]:
+            val = d.get(json_col)
+            if isinstance(val, str):
+                try:
+                    d[json_col] = json.loads(val)
+                except (json.JSONDecodeError, TypeError):
+                    d[json_col] = {} if json_col != "reference_trials" else []
+            elif val is None:
+                d[json_col] = {} if json_col != "reference_trials" else []
+        protocols.append(d)
+
+    return protocols
+
 
 async def migrate():
-    from app.database import SessionLocal
-    from app.db.tables import ProtocolDB
     from app.graph import get_driver, close_driver
     from app.graph.schema import ensure_constraints
     from app.graph import crud as graph_crud
@@ -38,50 +84,55 @@ async def migrate():
     await ensure_constraints(driver)
 
     # 2. Read all protocols from SQLite
-    db = SessionLocal()
-    protocols = db.query(ProtocolDB).all()
+    protocols = _read_sqlite_protocols()
     logger.info(f"Found {len(protocols)} protocols in SQLite")
+
+    if not protocols:
+        logger.info("No protocols to migrate.")
+        await close_driver()
+        return
 
     # 3. Migrate each protocol
     for idx, protocol in enumerate(protocols, 1):
-        logger.info(f"[{idx}/{len(protocols)}] Migrating: {protocol.protocol_number} (id={protocol.id})")
+        pid = protocol.get("id", "")
+        pnum = protocol.get("protocol_number", "")
+        logger.info(f"[{idx}/{len(protocols)}] Migrating: {pnum} (id={pid})")
 
         async with driver.session() as session:
             # Create/update Protocol node
             await graph_crud.create_protocol(session, {
-                "id": protocol.id,
-                "protocolNumber": protocol.protocol_number,
-                "shortTitle": protocol.short_title or "",
-                "fullTitle": protocol.full_title or "",
-                "phase": protocol.phase or "",
-                "studyType": protocol.study_type or "",
-                "therapeuticArea": protocol.therapeutic_area or "",
-                "indication": protocol.indication or "",
-                "sponsorName": protocol.sponsor_name or "",
-                "status": protocol.status or "Draft",
-                "version": protocol.version or "1.0",
-                "sampleSize": protocol.sample_size,
-                "templateId": protocol.template_id,
-                "narrativeSections": protocol.narrative_sections or {},
+                "id": pid,
+                "protocolNumber": pnum,
+                "shortTitle": protocol.get("short_title", ""),
+                "fullTitle": protocol.get("full_title", ""),
+                "phase": protocol.get("phase", ""),
+                "studyType": protocol.get("study_type", ""),
+                "therapeuticArea": protocol.get("therapeutic_area", ""),
+                "indication": protocol.get("indication", ""),
+                "sponsorName": protocol.get("sponsor_name", ""),
+                "status": protocol.get("status", "Draft"),
+                "version": protocol.get("version", "1.0"),
+                "sampleSize": protocol.get("sample_size"),
+                "templateId": protocol.get("template_id"),
+                "narrativeSections": protocol.get("narrative_sections", {}),
             })
 
             # Save design entities
-            sdd = protocol.study_design_data or {}
+            sdd = protocol.get("study_design_data", {})
             if sdd:
                 logger.info(f"  Writing design data ({len(sdd.get('studyArms', []))} arms, "
                             f"{len(sdd.get('studyEpochs', []))} epochs, "
                             f"{len(sdd.get('studyCells', []))} cells, "
                             f"{len(sdd.get('activities', []))} activities)")
-                await graph_crud.save_design(session, protocol.id, sdd)
-                await graph_crud.save_schedule(session, protocol.id, sdd)
+                await graph_crud.save_design(session, pid, sdd)
+                await graph_crud.save_schedule(session, pid, sdd)
 
             # Save reference trials
-            refs = protocol.reference_trials or []
+            refs = protocol.get("reference_trials", [])
             if refs:
                 logger.info(f"  Writing {len(refs)} reference trials")
-                await graph_crud.save_reference_trials(session, protocol.id, refs)
+                await graph_crud.save_reference_trials(session, pid, refs)
 
-    db.close()
     await close_driver()
     logger.info("Migration complete!")
 

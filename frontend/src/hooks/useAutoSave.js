@@ -18,9 +18,21 @@ export default function useAutoSave(protocolId) {
     if (!protocolId) return;
 
     const timer = setTimeout(async () => {
-      if (protocolDirty) await useProtocolStore.getState().saveProtocol();
-      if (designDirty) await useDesignStore.getState().saveDesign(protocolId);
-      if (scheduleDirty) await useScheduleStore.getState().saveSchedule(protocolId);
+      try {
+        if (protocolDirty) await useProtocolStore.getState().saveProtocol();
+      } catch (err) {
+        console.error('[AutoSave] Protocol save failed:', err);
+      }
+      try {
+        if (designDirty) await useDesignStore.getState().saveDesign(protocolId);
+      } catch (err) {
+        console.error('[AutoSave] Design save failed:', err);
+      }
+      try {
+        if (scheduleDirty) await useScheduleStore.getState().saveSchedule(protocolId);
+      } catch (err) {
+        console.error('[AutoSave] Schedule save failed:', err);
+      }
     }, 2000);
 
     return () => clearTimeout(timer);

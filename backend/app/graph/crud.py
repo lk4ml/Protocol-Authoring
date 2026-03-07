@@ -29,44 +29,78 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------------
 
 async def create_protocol(session: AsyncSession, data: dict) -> dict:
-    """Create a Protocol node with scalar properties."""
+    """Create or merge a Protocol node with scalar properties.
+
+    Uses protocolNumber as the business key. If a Protocol with the same
+    protocolNumber already exists, its properties are updated (upsert).
+    This avoids ConstraintValidationFailed errors from the unique
+    constraint on protocolNumber when a new UUID-based id is generated
+    for a retry / re-import.
+    """
     now = datetime.now(timezone.utc).isoformat()
+    protocol_number = data.get("protocolNumber", "")
+
+    # Check if a protocol with this protocolNumber already exists
+    existing = await session.run(
+        "MATCH (p:Protocol {protocolNumber: $pn}) RETURN p.id AS existingId",
+        pn=protocol_number,
+    )
+    existing_record = await existing.single()
+
+    # If it already exists, use the existing node's id for the MERGE
+    # so we update rather than create a conflicting node
+    node_id = existing_record["existingId"] if existing_record else data.get("id", str(uuid4()))
+
     result = await session.run(
         """
-        CREATE (p:Protocol {
-            id: $id,
-            protocolNumber: $protocolNumber,
-            shortTitle: $shortTitle,
-            fullTitle: $fullTitle,
-            phase: $phase,
-            studyType: $studyType,
-            therapeuticArea: $therapeuticArea,
-            indication: $indication,
-            sponsorName: $sponsorName,
-            status: $status,
-            version: $version,
-            sampleSize: $sampleSize,
-            templateId: $templateId,
-            narrativeSections: $narrativeSections,
-            createdAt: $now,
-            updatedAt: $now
-        })
+        MERGE (p:Protocol {id: $id})
+        ON CREATE SET
+            p.protocolNumber = $protocolNumber,
+            p.shortTitle = $shortTitle,
+            p.fullTitle = $fullTitle,
+            p.phase = $phase,
+            p.studyType = $studyType,
+            p.therapeuticArea = $therapeuticArea,
+            p.indication = $indication,
+            p.sponsorName = $sponsorName,
+            p.status = $status,
+            p.version = $version,
+            p.sampleSize = $sampleSize,
+            p.templateId = $templateId,
+            p.narrativeSections = $narrativeSections,
+            p.createdAt = $now,
+            p.updatedAt = $now
+        ON MATCH SET
+            p.protocolNumber = $protocolNumber,
+            p.shortTitle = $shortTitle,
+            p.fullTitle = $fullTitle,
+            p.phase = $phase,
+            p.studyType = $studyType,
+            p.therapeuticArea = $therapeuticArea,
+            p.indication = $indication,
+            p.sponsorName = $sponsorName,
+            p.status = $status,
+            p.version = $version,
+            p.sampleSize = $sampleSize,
+            p.templateId = $templateId,
+            p.narrativeSections = $narrativeSections,
+            p.updatedAt = $now
         RETURN p
         """,
-        id=data.get("id", str(uuid4())),
-        protocolNumber=data.get("protocolNumber", ""),
-        shortTitle=data.get("shortTitle", ""),
-        fullTitle=data.get("fullTitle", ""),
-        phase=data.get("phase", ""),
-        studyType=data.get("studyType", "Interventional"),
-        therapeuticArea=data.get("therapeuticArea", ""),
-        indication=data.get("indication", ""),
-        sponsorName=data.get("sponsorName", ""),
-        status=data.get("status", "Draft"),
-        version=data.get("version", "1.0"),
+        id=node_id,
+        protocolNumber=protocol_number,
+        shortTitle=data.get("shortTitle") or "",
+        fullTitle=data.get("fullTitle") or "",
+        phase=data.get("phase") or "",
+        studyType=data.get("studyType") or "Interventional",
+        therapeuticArea=data.get("therapeuticArea") or "",
+        indication=data.get("indication") or "",
+        sponsorName=data.get("sponsorName") or "",
+        status=data.get("status") or "Draft",
+        version=data.get("version") or "1.0",
         sampleSize=data.get("sampleSize"),
-        templateId=data.get("templateId"),
-        narrativeSections=json.dumps(data.get("narrativeSections", {})),
+        templateId=data.get("templateId") or "",
+        narrativeSections=json.dumps(data.get("narrativeSections") or {}),
         now=now,
     )
     record = await result.single()
@@ -150,28 +184,35 @@ async def delete_protocol(session: AsyncSession, protocol_id: str) -> bool:
 
 async def save_design(session: AsyncSession, protocol_id: str, data: dict):
     """
-    Save study design entities to the graph.
+    Save study design entities to the graph using MERGE/upsert.
 
-    Uses replace-all semantics per entity type: deletes old nodes for a
-    given key, then creates new ones. Only keys present in `data` are
-    replaced (merge behavior matching the existing API contract).
+    Strategy per entity type:
+      1. MERGE each entity by id (create if new, update if exists)
+      2. Delete orphans (entities no longer in payload)
+      3. Re-link relationships (clear old edges, create new)
+
+    All design entity types have globally unique IDs.
+    Child entities (Endpoint) are replaced on their parent (Objective).
+    StudyCells are junction nodes — always replaced since they depend on arm/epoch.
     """
-    async with session.begin_transaction() as tx:
+    tx = await session.begin_transaction()
+    try:
         # --- Study Arms ---
         if "studyArms" in data:
-            await tx.run(
-                "MATCH (:Protocol {id: $pid})-[:HAS_ARM]->(a:StudyArm) DETACH DELETE a",
-                pid=protocol_id,
-            )
+            incoming_ids = [a.get("id", str(uuid4())) for a in data["studyArms"]]
             for arm in data["studyArms"]:
                 await tx.run(
                     """
+                    MERGE (a:StudyArm {id: $id})
+                    ON CREATE SET a.name = $name, a.description = $description,
+                                  a.typeCode = $typeCode, a.typeDecode = $typeDecode,
+                                  a.order = $order
+                    ON MATCH SET  a.name = $name, a.description = $description,
+                                  a.typeCode = $typeCode, a.typeDecode = $typeDecode,
+                                  a.order = $order
+                    WITH a
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (a:StudyArm {
-                        id: $id, name: $name, description: $description,
-                        typeCode: $typeCode, typeDecode: $typeDecode, order: $order
-                    })
-                    CREATE (p)-[:HAS_ARM]->(a)
+                    MERGE (p)-[:HAS_ARM]->(a)
                     """,
                     pid=protocol_id,
                     id=arm.get("id", str(uuid4())),
@@ -181,23 +222,32 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                     typeDecode=_code_val(arm.get("type"), "decode"),
                     order=arm.get("order", 0),
                 )
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_ARM]->(a:StudyArm)
+                WHERE NOT a.id IN $keepIds
+                DETACH DELETE a
+                """,
+                pid=protocol_id, keepIds=incoming_ids,
+            )
 
         # --- Study Epochs ---
         if "studyEpochs" in data:
-            await tx.run(
-                "MATCH (:Protocol {id: $pid})-[:HAS_EPOCH]->(e:StudyEpoch) DETACH DELETE e",
-                pid=protocol_id,
-            )
             epochs = data["studyEpochs"]
+            incoming_ids = [e.get("id", str(uuid4())) for e in epochs]
             for epoch in epochs:
                 await tx.run(
                     """
+                    MERGE (e:StudyEpoch {id: $id})
+                    ON CREATE SET e.name = $name, e.description = $description,
+                                  e.typeCode = $typeCode, e.typeDecode = $typeDecode,
+                                  e.order = $order
+                    ON MATCH SET  e.name = $name, e.description = $description,
+                                  e.typeCode = $typeCode, e.typeDecode = $typeDecode,
+                                  e.order = $order
+                    WITH e
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (e:StudyEpoch {
-                        id: $id, name: $name, description: $description,
-                        typeCode: $typeCode, typeDecode: $typeDecode, order: $order
-                    })
-                    CREATE (p)-[:HAS_EPOCH]->(e)
+                    MERGE (p)-[:HAS_EPOCH]->(e)
                     """,
                     pid=protocol_id,
                     id=epoch.get("id", str(uuid4())),
@@ -207,7 +257,15 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                     typeDecode=_code_val(epoch.get("type"), "decode"),
                     order=epoch.get("order", 0),
                 )
-            # NEXT_EPOCH linked list
+            # Clear and rebuild NEXT_EPOCH chain
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_EPOCH]->(e:StudyEpoch)
+                       -[r:NEXT_EPOCH]->()
+                DELETE r
+                """,
+                pid=protocol_id,
+            )
             for epoch in epochs:
                 nid = epoch.get("nextEpochId")
                 if nid:
@@ -215,28 +273,37 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                         """
                         MATCH (e1:StudyEpoch {id: $fromId})
                         MATCH (e2:StudyEpoch {id: $toId})
-                        MERGE (e1)-[:NEXT_EPOCH]->(e2)
+                        CREATE (e1)-[:NEXT_EPOCH]->(e2)
                         """,
                         fromId=epoch["id"], toId=nid,
                     )
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_EPOCH]->(e:StudyEpoch)
+                WHERE NOT e.id IN $keepIds
+                DETACH DELETE e
+                """,
+                pid=protocol_id, keepIds=incoming_ids,
+            )
 
         # --- Study Elements ---
         if "studyElements" in data:
-            await tx.run(
-                "MATCH (:Protocol {id: $pid})-[:HAS_ELEMENT]->(e:StudyElement) DETACH DELETE e",
-                pid=protocol_id,
-            )
+            incoming_ids = [e.get("id", str(uuid4())) for e in data["studyElements"]]
             for elem in data["studyElements"]:
                 await tx.run(
                     """
+                    MERGE (e:StudyElement {id: $id})
+                    ON CREATE SET e.name = $name, e.description = $description,
+                                  e.color = $color,
+                                  e.transitionStartRule = $transitionStartRule,
+                                  e.transitionEndRule = $transitionEndRule
+                    ON MATCH SET  e.name = $name, e.description = $description,
+                                  e.color = $color,
+                                  e.transitionStartRule = $transitionStartRule,
+                                  e.transitionEndRule = $transitionEndRule
+                    WITH e
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (e:StudyElement {
-                        id: $id, name: $name, description: $description,
-                        color: $color,
-                        transitionStartRule: $transitionStartRule,
-                        transitionEndRule: $transitionEndRule
-                    })
-                    CREATE (p)-[:HAS_ELEMENT]->(e)
+                    MERGE (p)-[:HAS_ELEMENT]->(e)
                     """,
                     pid=protocol_id,
                     id=elem.get("id", str(uuid4())),
@@ -246,9 +313,18 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                     transitionStartRule=elem.get("transitionStartRule"),
                     transitionEndRule=elem.get("transitionEndRule"),
                 )
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_ELEMENT]->(e:StudyElement)
+                WHERE NOT e.id IN $keepIds
+                DETACH DELETE e
+                """,
+                pid=protocol_id, keepIds=incoming_ids,
+            )
 
-        # --- Study Cells (junction: arm × epoch × elements) ---
+        # --- Study Cells (junction: arm x epoch x elements — always replaced) ---
         if "studyCells" in data:
+            # Cells are junction nodes whose identity is arm+epoch — replace all
             await tx.run(
                 "MATCH (:Protocol {id: $pid})-[:HAS_CELL]->(c:StudyCell) DETACH DELETE c",
                 pid=protocol_id,
@@ -271,7 +347,6 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                     armId=cell.get("armId", ""),
                     epochId=cell.get("epochId", ""),
                 )
-                # CONTAINS_ELEMENT edges
                 for elem_id in cell.get("elementIds", []):
                     await tx.run(
                         """
@@ -284,22 +359,18 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
 
         # --- Study Markers ---
         if "studyMarkers" in data:
-            await tx.run(
-                "MATCH (:Protocol {id: $pid})-[:HAS_MARKER]->(m:StudyMarker) DETACH DELETE m",
-                pid=protocol_id,
-            )
+            incoming_ids = [m.get("id", str(uuid4())) for m in data["studyMarkers"]]
             for marker in data["studyMarkers"]:
                 await tx.run(
                     """
-                    MATCH (p:Protocol {id: $pid})
-                    CREATE (m:StudyMarker {
-                        id: $id, type: $type, label: $label,
-                        ratio: $ratio, description: $description
-                    })
-                    CREATE (p)-[:HAS_MARKER]->(m)
+                    MERGE (m:StudyMarker {id: $id})
+                    ON CREATE SET m.type = $type, m.label = $label,
+                                  m.ratio = $ratio, m.description = $description
+                    ON MATCH SET  m.type = $type, m.label = $label,
+                                  m.ratio = $ratio, m.description = $description
                     WITH m
-                    MATCH (epoch:StudyEpoch {id: $afterEpochId})
-                    CREATE (m)-[:AFTER_EPOCH]->(epoch)
+                    MATCH (p:Protocol {id: $pid})
+                    MERGE (p)-[:HAS_MARKER]->(m)
                     """,
                     pid=protocol_id,
                     id=marker.get("id", str(uuid4())),
@@ -307,10 +378,32 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                     label=marker.get("label", ""),
                     ratio=marker.get("ratio", ""),
                     description=marker.get("description", ""),
-                    afterEpochId=marker.get("afterEpochId", ""),
                 )
+                # Re-link AFTER_EPOCH
+                await tx.run(
+                    "MATCH (m:StudyMarker {id: $id})-[r:AFTER_EPOCH]->() DELETE r",
+                    id=marker["id"],
+                )
+                epoch_id = marker.get("afterEpochId", "")
+                if epoch_id:
+                    await tx.run(
+                        """
+                        MATCH (m:StudyMarker {id: $markerId})
+                        MATCH (ep:StudyEpoch {id: $epochId})
+                        CREATE (m)-[:AFTER_EPOCH]->(ep)
+                        """,
+                        markerId=marker["id"], epochId=epoch_id,
+                    )
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_MARKER]->(m:StudyMarker)
+                WHERE NOT m.id IN $keepIds
+                DETACH DELETE m
+                """,
+                pid=protocol_id, keepIds=incoming_ids,
+            )
 
-        # --- Study Flow Overrides ---
+        # --- Study Flow Overrides (always replaced — junction with 3 rels) ---
         if "studyFlowOverrides" in data:
             await tx.run(
                 "MATCH (:Protocol {id: $pid})-[:HAS_FLOW_OVERRIDE]->(f:StudyFlowOverride) DETACH DELETE f",
@@ -358,25 +451,24 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
 
         # --- Eligibility Criteria ---
         if "eligibilityCriteria" in data:
-            await tx.run(
-                "MATCH (:Protocol {id: $pid})-[:HAS_CRITERION]->(c:EligibilityCriterion) DETACH DELETE c",
-                pid=protocol_id,
-            )
             ec = data["eligibilityCriteria"]
             criteria = []
             if isinstance(ec, dict):
                 criteria = ec.get("inclusion", []) + ec.get("exclusion", [])
             elif isinstance(ec, list):
                 criteria = ec
+            incoming_ids = [c.get("id", str(uuid4())) for c in criteria]
             for crit in criteria:
                 await tx.run(
                     """
+                    MERGE (c:EligibilityCriterion {id: $id})
+                    ON CREATE SET c.name = $name, c.text = $text,
+                                  c.category = $category, c.order = $order
+                    ON MATCH SET  c.name = $name, c.text = $text,
+                                  c.category = $category, c.order = $order
+                    WITH c
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (c:EligibilityCriterion {
-                        id: $id, name: $name, text: $text,
-                        category: $category, order: $order
-                    })
-                    CREATE (p)-[:HAS_CRITERION]->(c)
+                    MERGE (p)-[:HAS_CRITERION]->(c)
                     """,
                     pid=protocol_id,
                     id=crit.get("id", str(uuid4())),
@@ -385,35 +477,46 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                     category=crit.get("category", "inclusion"),
                     order=crit.get("order", 0),
                 )
-
-        # --- Objectives + Endpoints ---
-        if "objectives" in data:
-            # Delete old endpoints first (they're children of objectives)
             await tx.run(
                 """
-                MATCH (:Protocol {id: $pid})-[:HAS_OBJECTIVE]->(o:Objective)
-                OPTIONAL MATCH (o)-[:HAS_ENDPOINT]->(e:Endpoint)
-                DETACH DELETE e, o
+                MATCH (p:Protocol {id: $pid})-[:HAS_CRITERION]->(c:EligibilityCriterion)
+                WHERE NOT c.id IN $keepIds
+                DETACH DELETE c
                 """,
-                pid=protocol_id,
+                pid=protocol_id, keepIds=incoming_ids,
             )
+
+        # --- Objectives + Endpoints (MERGE objective, replace endpoints) ---
+        if "objectives" in data:
+            incoming_ids = [o.get("id", str(uuid4())) for o in data["objectives"]]
             for obj in data["objectives"]:
                 level = obj.get("level", {})
+                obj_id = obj.get("id", str(uuid4()))
                 await tx.run(
                     """
+                    MERGE (o:Objective {id: $id})
+                    ON CREATE SET o.name = $name, o.description = $description,
+                                  o.levelCode = $levelCode, o.levelDecode = $levelDecode
+                    ON MATCH SET  o.name = $name, o.description = $description,
+                                  o.levelCode = $levelCode, o.levelDecode = $levelDecode
+                    WITH o
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (o:Objective {
-                        id: $id, name: $name, description: $description,
-                        levelCode: $levelCode, levelDecode: $levelDecode
-                    })
-                    CREATE (p)-[:HAS_OBJECTIVE]->(o)
+                    MERGE (p)-[:HAS_OBJECTIVE]->(o)
                     """,
                     pid=protocol_id,
-                    id=obj.get("id", str(uuid4())),
+                    id=obj_id,
                     name=obj.get("name", ""),
                     description=obj.get("description", ""),
                     levelCode=_code_val(level, "code"),
                     levelDecode=_code_val(level, "decode"),
+                )
+                # Replace endpoints (children)
+                await tx.run(
+                    """
+                    MATCH (o:Objective {id: $objId})-[:HAS_ENDPOINT]->(e:Endpoint)
+                    DETACH DELETE e
+                    """,
+                    objId=obj_id,
                 )
                 for ep in obj.get("endpoints", []):
                     ep_level = ep.get("level", {})
@@ -427,7 +530,7 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                         })
                         CREATE (o)-[:HAS_ENDPOINT]->(e)
                         """,
-                        objId=obj["id"],
+                        objId=obj_id,
                         id=ep.get("id", str(uuid4())),
                         name=ep.get("name", ""),
                         description=ep.get("description", ""),
@@ -435,8 +538,21 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
                         levelCode=_code_val(ep_level, "code"),
                         levelDecode=_code_val(ep_level, "decode"),
                     )
+            # Delete orphaned Objectives + their Endpoints
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_OBJECTIVE]->(o:Objective)
+                WHERE NOT o.id IN $keepIds
+                OPTIONAL MATCH (o)-[:HAS_ENDPOINT]->(e:Endpoint)
+                DETACH DELETE e, o
+                """,
+                pid=protocol_id, keepIds=incoming_ids,
+            )
 
         await tx.commit()
+    except Exception:
+        await tx.rollback()
+        raise
 
 
 # -----------------------------------------------------------------------
@@ -445,27 +561,33 @@ async def save_design(session: AsyncSession, protocol_id: str, data: dict):
 
 async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
     """
-    Save schedule/SOA entities to the graph.
+    Save schedule/SOA entities to the graph using MERGE/upsert.
 
-    Same replace-all-per-key semantics as save_design.
+    Strategy per entity type:
+      1. MERGE each entity by id (create if new, update if exists)
+      2. Delete orphans (entities no longer in payload)
+      3. Re-link relationships (clear old edges, create new)
+
+    SoaGroup/ActivityGroup use protocol-scoped MERGE (non-unique IDs).
+    All other types use simple MERGE by globally-unique id.
+    Child entities (Procedure, Instance, Timing) are replaced on parent.
     """
-    async with session.begin_transaction() as tx:
-        # --- SOA Groups ---
+    tx = await session.begin_transaction()
+    try:
+        # --- SOA Groups (protocol-scoped MERGE) ---
         if "soaGroups" in data:
-            await tx.run(
-                "MATCH (:Protocol {id: $pid})-[:HAS_SOA_GROUP]->(g:SoaGroup) DETACH DELETE g",
-                pid=protocol_id,
-            )
+            incoming_ids = [g.get("id", "") for g in data["soaGroups"]]
             for grp in data["soaGroups"]:
                 await tx.run(
                     """
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (g:SoaGroup {
-                        id: $id, name: $name, order: $order,
-                        colorBg: $colorBg, colorText: $colorText,
-                        colorBorder: $colorBorder
-                    })
-                    CREATE (p)-[:HAS_SOA_GROUP]->(g)
+                    MERGE (p)-[:HAS_SOA_GROUP]->(g:SoaGroup {id: $id})
+                    ON CREATE SET g.name = $name, g.order = $order,
+                                  g.colorBg = $colorBg, g.colorText = $colorText,
+                                  g.colorBorder = $colorBorder
+                    ON MATCH SET  g.name = $name, g.order = $order,
+                                  g.colorBg = $colorBg, g.colorText = $colorText,
+                                  g.colorBorder = $colorBorder
                     """,
                     pid=protocol_id,
                     id=grp.get("id", ""),
@@ -475,55 +597,83 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                     colorText=grp.get("colorText", ""),
                     colorBorder=grp.get("colorBorder", ""),
                 )
-
-        # --- Activity Groups ---
-        if "activityGroups" in data:
+            # Delete orphaned SoaGroups
             await tx.run(
-                "MATCH (:Protocol {id: $pid})-[:HAS_ACTIVITY_GROUP]->(g:ActivityGroup) DETACH DELETE g",
-                pid=protocol_id,
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_SOA_GROUP]->(g:SoaGroup)
+                WHERE NOT g.id IN $keepIds
+                DETACH DELETE g
+                """,
+                pid=protocol_id, keepIds=incoming_ids,
             )
+
+        # --- Activity Groups (protocol-scoped MERGE) ---
+        if "activityGroups" in data:
+            incoming_ids = [g.get("id", "") for g in data["activityGroups"]]
             for grp in data["activityGroups"]:
                 await tx.run(
                     """
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (g:ActivityGroup {
-                        id: $id, name: $name, order: $order
-                    })
-                    CREATE (p)-[:HAS_ACTIVITY_GROUP]->(g)
-                    WITH g
-                    MATCH (sg:SoaGroup {id: $soaGroupId})
-                    CREATE (g)-[:BELONGS_TO_SOA]->(sg)
+                    MERGE (p)-[:HAS_ACTIVITY_GROUP]->(g:ActivityGroup {id: $id})
+                    ON CREATE SET g.name = $name, g.order = $order
+                    ON MATCH SET  g.name = $name, g.order = $order
                     """,
                     pid=protocol_id,
                     id=grp.get("id", ""),
                     name=grp.get("name", ""),
                     order=grp.get("order", 0),
-                    soaGroupId=grp.get("soaGroupId", ""),
                 )
-
-        # --- Encounters ---
-        if "encounters" in data:
+                # Re-link BELONGS_TO_SOA (scoped to same protocol)
+                soa_id = grp.get("soaGroupId", "")
+                if soa_id:
+                    await tx.run(
+                        """
+                        MATCH (p:Protocol {id: $pid})-[:HAS_ACTIVITY_GROUP]->(g:ActivityGroup {id: $agId})
+                        OPTIONAL MATCH (g)-[old:BELONGS_TO_SOA]->()
+                        DELETE old
+                        WITH p, g
+                        MATCH (p)-[:HAS_SOA_GROUP]->(sg:SoaGroup {id: $soaId})
+                        CREATE (g)-[:BELONGS_TO_SOA]->(sg)
+                        """,
+                        pid=protocol_id, agId=grp["id"], soaId=soa_id,
+                    )
+            # Delete orphaned ActivityGroups
             await tx.run(
-                "MATCH (:Protocol {id: $pid})-[:HAS_ENCOUNTER]->(e:Encounter) DETACH DELETE e",
-                pid=protocol_id,
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_ACTIVITY_GROUP]->(g:ActivityGroup)
+                WHERE NOT g.id IN $keepIds
+                DETACH DELETE g
+                """,
+                pid=protocol_id, keepIds=incoming_ids,
             )
+
+        # --- Encounters (globally unique id — simple MERGE) ---
+        if "encounters" in data:
             encounters = data["encounters"]
+            incoming_ids = [e.get("id", str(uuid4())) for e in encounters]
             for enc in encounters:
+                enc_id = enc.get("id", str(uuid4()))
                 await tx.run(
                     """
+                    MERGE (e:Encounter {id: $id})
+                    ON CREATE SET e.name = $name, e.description = $description,
+                                  e.typeCode = $typeCode, e.typeDecode = $typeDecode,
+                                  e.environmentalSetting = $environmentalSetting,
+                                  e.label = $label, e.order = $order,
+                                  e.week = $week, e.studyDay = $studyDay,
+                                  e.visitWindow = $visitWindow
+                    ON MATCH SET  e.name = $name, e.description = $description,
+                                  e.typeCode = $typeCode, e.typeDecode = $typeDecode,
+                                  e.environmentalSetting = $environmentalSetting,
+                                  e.label = $label, e.order = $order,
+                                  e.week = $week, e.studyDay = $studyDay,
+                                  e.visitWindow = $visitWindow
+                    WITH e
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (e:Encounter {
-                        id: $id, name: $name, description: $description,
-                        typeCode: $typeCode, typeDecode: $typeDecode,
-                        environmentalSetting: $environmentalSetting,
-                        label: $label, order: $order,
-                        week: $week, studyDay: $studyDay,
-                        visitWindow: $visitWindow
-                    })
-                    CREATE (p)-[:HAS_ENCOUNTER]->(e)
+                    MERGE (p)-[:HAS_ENCOUNTER]->(e)
                     """,
                     pid=protocol_id,
-                    id=enc.get("id", str(uuid4())),
+                    id=enc_id,
                     name=enc.get("name", ""),
                     description=enc.get("description", ""),
                     typeCode=_code_val(enc.get("type"), "code"),
@@ -535,7 +685,11 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                     studyDay=enc.get("studyDay"),
                     visitWindow=enc.get("visitWindow", ""),
                 )
-                # IN_EPOCH relationship
+                # Re-link IN_EPOCH
+                await tx.run(
+                    "MATCH (e:Encounter {id: $id})-[r:IN_EPOCH]->() DELETE r",
+                    id=enc_id,
+                )
                 epoch_id = enc.get("epochId")
                 if epoch_id:
                     await tx.run(
@@ -544,9 +698,17 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                         MATCH (ep:StudyEpoch {id: $epochId})
                         CREATE (e)-[:IN_EPOCH]->(ep)
                         """,
-                        encId=enc["id"], epochId=epoch_id,
+                        encId=enc_id, epochId=epoch_id,
                     )
-            # NEXT_ENCOUNTER linked list
+            # Clear old NEXT_ENCOUNTER chain, rebuild
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_ENCOUNTER]->(e:Encounter)
+                       -[r:NEXT_ENCOUNTER]->()
+                DELETE r
+                """,
+                pid=protocol_id,
+            )
             for enc in encounters:
                 nid = enc.get("nextEncounterId")
                 if nid:
@@ -554,40 +716,49 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                         """
                         MATCH (e1:Encounter {id: $fromId})
                         MATCH (e2:Encounter {id: $toId})
-                        MERGE (e1)-[:NEXT_ENCOUNTER]->(e2)
+                        CREATE (e1)-[:NEXT_ENCOUNTER]->(e2)
                         """,
                         fromId=enc["id"], toId=nid,
                     )
-
-        # --- Activities + Procedures ---
-        if "activities" in data:
-            # Delete procedures first, then activities
+            # Delete orphaned Encounters
             await tx.run(
                 """
-                MATCH (:Protocol {id: $pid})-[:HAS_ACTIVITY]->(a:Activity)
-                OPTIONAL MATCH (a)-[:DEFINES_PROCEDURE]->(pr:Procedure)
-                DETACH DELETE pr, a
+                MATCH (p:Protocol {id: $pid})-[:HAS_ENCOUNTER]->(e:Encounter)
+                WHERE NOT e.id IN $keepIds
+                DETACH DELETE e
                 """,
-                pid=protocol_id,
+                pid=protocol_id, keepIds=incoming_ids,
             )
+
+        # --- Activities + Procedures (MERGE activity, replace children) ---
+        if "activities" in data:
             activities = data["activities"]
+            incoming_ids = [a.get("id", str(uuid4())) for a in activities]
             for act in activities:
+                act_id = act.get("id", str(uuid4()))
                 await tx.run(
                     """
+                    MERGE (a:Activity {id: $id})
+                    ON CREATE SET a.name = $name, a.description = $description,
+                                  a.categoryCode = $categoryCode, a.sdtmDomain = $sdtmDomain,
+                                  a.uiCategory = $uiCategory, a.catalogId = $catalogId,
+                                  a.source = $source, a.therapeuticArea = $therapeuticArea,
+                                  a.nciCode = $nciCode, a.definition = $definition,
+                                  a.cdiscCategories = $cdiscCategories,
+                                  a.synonyms = $synonyms
+                    ON MATCH SET  a.name = $name, a.description = $description,
+                                  a.categoryCode = $categoryCode, a.sdtmDomain = $sdtmDomain,
+                                  a.uiCategory = $uiCategory, a.catalogId = $catalogId,
+                                  a.source = $source, a.therapeuticArea = $therapeuticArea,
+                                  a.nciCode = $nciCode, a.definition = $definition,
+                                  a.cdiscCategories = $cdiscCategories,
+                                  a.synonyms = $synonyms
+                    WITH a
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (a:Activity {
-                        id: $id, name: $name, description: $description,
-                        categoryCode: $categoryCode, sdtmDomain: $sdtmDomain,
-                        uiCategory: $uiCategory, catalogId: $catalogId,
-                        source: $source, therapeuticArea: $therapeuticArea,
-                        nciCode: $nciCode, definition: $definition,
-                        cdiscCategories: $cdiscCategories,
-                        synonyms: $synonyms
-                    })
-                    CREATE (p)-[:HAS_ACTIVITY]->(a)
+                    MERGE (p)-[:HAS_ACTIVITY]->(a)
                     """,
                     pid=protocol_id,
-                    id=act.get("id", str(uuid4())),
+                    id=act_id,
                     name=act.get("name", ""),
                     description=act.get("description", ""),
                     categoryCode=act.get("categoryCode", ""),
@@ -601,29 +772,44 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                     cdiscCategories=act.get("cdiscCategories", []),
                     synonyms=act.get("synonyms", []),
                 )
-                # IN_SOA_GROUP shortcut
+                # Re-link IN_SOA_GROUP (scoped to same protocol)
+                await tx.run(
+                    "MATCH (a:Activity {id: $id})-[r:IN_SOA_GROUP]->() DELETE r",
+                    id=act_id,
+                )
                 soa_id = act.get("soaGroupId")
                 if soa_id:
                     await tx.run(
                         """
+                        MATCH (p:Protocol {id: $pid})-[:HAS_SOA_GROUP]->(g:SoaGroup {id: $soaId})
                         MATCH (a:Activity {id: $actId})
-                        MATCH (g:SoaGroup {id: $soaId})
                         CREATE (a)-[:IN_SOA_GROUP]->(g)
                         """,
-                        actId=act["id"], soaId=soa_id,
+                        pid=protocol_id, actId=act_id, soaId=soa_id,
                     )
-                # IN_ACTIVITY_GROUP
+                # Re-link IN_ACTIVITY_GROUP (scoped to same protocol)
+                await tx.run(
+                    "MATCH (a:Activity {id: $id})-[r:IN_ACTIVITY_GROUP]->() DELETE r",
+                    id=act_id,
+                )
                 ag_id = act.get("activityGroupId")
                 if ag_id:
                     await tx.run(
                         """
+                        MATCH (p:Protocol {id: $pid})-[:HAS_ACTIVITY_GROUP]->(g:ActivityGroup {id: $agId})
                         MATCH (a:Activity {id: $actId})
-                        MATCH (g:ActivityGroup {id: $agId})
                         CREATE (a)-[:IN_ACTIVITY_GROUP]->(g)
                         """,
-                        actId=act["id"], agId=ag_id,
+                        pid=protocol_id, actId=act_id, agId=ag_id,
                     )
-                # DEFINES_PROCEDURE
+                # Replace procedures (clear old, create new)
+                await tx.run(
+                    """
+                    MATCH (a:Activity {id: $actId})-[:DEFINES_PROCEDURE]->(pr:Procedure)
+                    DETACH DELETE pr
+                    """,
+                    actId=act_id,
+                )
                 for proc in act.get("definedProcedures", []):
                     await tx.run(
                         """
@@ -634,13 +820,21 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                         })
                         CREATE (a)-[:DEFINES_PROCEDURE]->(pr)
                         """,
-                        actId=act["id"],
+                        actId=act_id,
                         id=proc.get("id", str(uuid4())),
                         name=proc.get("name", ""),
                         description=proc.get("description", ""),
                         procedureType=_code_val(proc.get("procedureType"), "code"),
                     )
-            # NEXT_ACTIVITY linked list
+            # Clear old NEXT_ACTIVITY chain, rebuild
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_ACTIVITY]->(a:Activity)
+                       -[r:NEXT_ACTIVITY]->()
+                DELETE r
+                """,
+                pid=protocol_id,
+            )
             for act in activities:
                 nid = act.get("nextActivityId")
                 if nid:
@@ -648,43 +842,69 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                         """
                         MATCH (a1:Activity {id: $fromId})
                         MATCH (a2:Activity {id: $toId})
-                        MERGE (a1)-[:NEXT_ACTIVITY]->(a2)
+                        CREATE (a1)-[:NEXT_ACTIVITY]->(a2)
                         """,
                         fromId=act["id"], toId=nid,
                     )
-
-        # --- Schedule Timelines + Instances + Timings ---
-        if "scheduleTimelines" in data:
+            # Delete orphaned Activities + their Procedures
             await tx.run(
                 """
-                MATCH (:Protocol {id: $pid})-[:HAS_TIMELINE]->(tl:ScheduleTimeline)
-                OPTIONAL MATCH (tl)-[:HAS_INSTANCE]->(i:ScheduledActivityInstance)
-                OPTIONAL MATCH (tl)-[:HAS_TIMING]->(t:Timing)
-                DETACH DELETE t, i, tl
+                MATCH (p:Protocol {id: $pid})-[:HAS_ACTIVITY]->(a:Activity)
+                WHERE NOT a.id IN $keepIds
+                OPTIONAL MATCH (a)-[:DEFINES_PROCEDURE]->(pr:Procedure)
+                DETACH DELETE pr, a
                 """,
-                pid=protocol_id,
+                pid=protocol_id, keepIds=incoming_ids,
             )
+
+        # --- Schedule Timelines (MERGE timeline, replace children) ---
+        if "scheduleTimelines" in data:
+            incoming_tl_ids = []
             for tl in data["scheduleTimelines"]:
+                tl_id = tl.get("id") or str(uuid4())
+                incoming_tl_ids.append(tl_id)
+
+                # MERGE the timeline node
                 await tx.run(
                     """
+                    MERGE (tl:ScheduleTimeline {id: $id})
+                    ON CREATE SET tl.name = $name, tl.description = $description,
+                                  tl.mainTimeline = $mainTimeline,
+                                  tl.entryCondition = $entryCondition
+                    ON MATCH SET  tl.name = $name, tl.description = $description,
+                                  tl.mainTimeline = $mainTimeline,
+                                  tl.entryCondition = $entryCondition
+                    WITH tl
                     MATCH (p:Protocol {id: $pid})
-                    CREATE (tl:ScheduleTimeline {
-                        id: $id, name: $name, description: $description,
-                        mainTimeline: $mainTimeline,
-                        entryCondition: $entryCondition
-                    })
-                    CREATE (p)-[:HAS_TIMELINE]->(tl)
+                    MERGE (p)-[:HAS_TIMELINE]->(tl)
                     """,
                     pid=protocol_id,
-                    id=tl.get("id", str(uuid4())),
+                    id=tl_id,
                     name=tl.get("name", "Main Timeline"),
                     description=tl.get("description", ""),
                     mainTimeline=tl.get("mainTimeline", True),
                     entryCondition=tl.get("entryCondition", ""),
                 )
 
+                # Replace children: delete old instances + timings, recreate
+                await tx.run(
+                    """
+                    MATCH (tl:ScheduleTimeline {id: $tlId})-[:HAS_INSTANCE]->(i:ScheduledActivityInstance)
+                    DETACH DELETE i
+                    """,
+                    tlId=tl_id,
+                )
+                await tx.run(
+                    """
+                    MATCH (tl:ScheduleTimeline {id: $tlId})-[:HAS_TIMING]->(t:Timing)
+                    DETACH DELETE t
+                    """,
+                    tlId=tl_id,
+                )
+
                 # Instances (SOA matrix junctions)
                 for inst in tl.get("instances", []):
+                    inst_id = inst.get("id", str(uuid4()))
                     await tx.run(
                         """
                         MATCH (tl:ScheduleTimeline {id: $tlId})
@@ -694,8 +914,8 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                         })
                         CREATE (tl)-[:HAS_INSTANCE]->(i)
                         """,
-                        tlId=tl["id"],
-                        id=inst.get("id", str(uuid4())),
+                        tlId=tl_id,
+                        id=inst_id,
                         defaultConditionId=inst.get("defaultConditionId", "mandatory"),
                     )
                     # AT_ENCOUNTER
@@ -707,7 +927,7 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                             MATCH (e:Encounter {id: $encId})
                             CREATE (i)-[:AT_ENCOUNTER]->(e)
                             """,
-                            instId=inst["id"], encId=enc_id,
+                            instId=inst_id, encId=enc_id,
                         )
                     # FOR_ACTIVITY (N:M)
                     for act_id in inst.get("activityIds", []):
@@ -717,7 +937,7 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                             MATCH (a:Activity {id: $actId})
                             CREATE (i)-[:FOR_ACTIVITY]->(a)
                             """,
-                            instId=inst["id"], actId=act_id,
+                            instId=inst_id, actId=act_id,
                         )
                     # IN_EPOCH (optional)
                     epoch_id = inst.get("epochId")
@@ -728,11 +948,12 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                             MATCH (ep:StudyEpoch {id: $epochId})
                             CREATE (i)-[:IN_EPOCH]->(ep)
                             """,
-                            instId=inst["id"], epochId=epoch_id,
+                            instId=inst_id, epochId=epoch_id,
                         )
 
                 # Timings
                 for timing in tl.get("timings", []):
+                    timing_id = timing.get("id", str(uuid4()))
                     await tx.run(
                         """
                         MATCH (tl:ScheduleTimeline {id: $tlId})
@@ -746,8 +967,8 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                         })
                         CREATE (tl)-[:HAS_TIMING]->(t)
                         """,
-                        tlId=tl["id"],
-                        id=timing.get("id", str(uuid4())),
+                        tlId=tl_id,
+                        id=timing_id,
                         typeCode=_code_val(timing.get("type"), "code"),
                         description=timing.get("description", ""),
                         value=timing.get("value", ""),
@@ -765,7 +986,7 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                             MATCH (i:ScheduledActivityInstance {id: $instId})
                             CREATE (t)-[:RELATIVE_FROM]->(i)
                             """,
-                            tId=timing["id"], instId=from_id,
+                            tId=timing_id, instId=from_id,
                         )
                     to_id = timing.get("relativeToScheduledInstanceId")
                     if to_id:
@@ -775,8 +996,20 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
                             MATCH (i:ScheduledActivityInstance {id: $instId})
                             CREATE (t)-[:RELATIVE_TO]->(i)
                             """,
-                            tId=timing["id"], instId=to_id,
+                            tId=timing_id, instId=to_id,
                         )
+
+            # Delete orphaned Timelines + their children
+            await tx.run(
+                """
+                MATCH (p:Protocol {id: $pid})-[:HAS_TIMELINE]->(tl:ScheduleTimeline)
+                WHERE NOT tl.id IN $keepIds
+                OPTIONAL MATCH (tl)-[:HAS_INSTANCE]->(i:ScheduledActivityInstance)
+                OPTIONAL MATCH (tl)-[:HAS_TIMING]->(t:Timing)
+                DETACH DELETE t, i, tl
+                """,
+                pid=protocol_id, keepIds=incoming_tl_ids,
+            )
 
         # Update timestamp
         await tx.run(
@@ -784,6 +1017,9 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
             pid=protocol_id, now=datetime.now(timezone.utc).isoformat(),
         )
         await tx.commit()
+    except Exception:
+        await tx.rollback()
+        raise
 
 
 # -----------------------------------------------------------------------
@@ -792,7 +1028,8 @@ async def save_schedule(session: AsyncSession, protocol_id: str, data: dict):
 
 async def save_reference_trials(session: AsyncSession, protocol_id: str, trials: list[dict]):
     """Replace all reference trials for a protocol."""
-    async with session.begin_transaction() as tx:
+    tx = await session.begin_transaction()
+    try:
         await tx.run(
             "MATCH (:Protocol {id: $pid})-[:REFERENCES_TRIAL]->(r:ReferenceTrial) DETACH DELETE r",
             pid=protocol_id,
@@ -811,17 +1048,20 @@ async def save_reference_trials(session: AsyncSession, protocol_id: str, trials:
                 CREATE (p)-[:REFERENCES_TRIAL]->(r)
                 """,
                 pid=protocol_id,
-                nctId=trial.get("nctId", ""),
-                briefTitle=trial.get("briefTitle", ""),
-                officialTitle=trial.get("officialTitle", ""),
-                conditions=trial.get("conditions", []),
-                phase=trial.get("phase", ""),
-                sponsor=trial.get("sponsor", ""),
-                enrollment=trial.get("enrollment"),
-                armsJson=json.dumps(trial.get("arms", [])),
-                parsedAt=trial.get("parsedAt", ""),
+                nctId=trial.get("nctId") or "",
+                briefTitle=trial.get("briefTitle") or "",
+                officialTitle=trial.get("officialTitle") or "",
+                conditions=trial.get("conditions") or [],
+                phase=trial.get("phase") or "",
+                sponsor=trial.get("sponsor") or "",
+                enrollment=trial.get("enrollment") or 0,
+                armsJson=json.dumps(trial.get("arms") or []),
+                parsedAt=trial.get("parsedAt") or "",
             )
         await tx.commit()
+    except Exception:
+        await tx.rollback()
+        raise
 
 
 # -----------------------------------------------------------------------

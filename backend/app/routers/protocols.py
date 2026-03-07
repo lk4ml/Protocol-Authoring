@@ -1,13 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+"""
+Protocol CRUD router — Neo4j graph-only.
+
+All protocol metadata and study design data lives in the Neo4j graph.
+"""
+
+import json
+import logging
+import traceback
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
-from ..database import get_db
-from ..db import crud
+from ..graph import get_session
+from ..graph import crud as graph_crud
 from ..services import template_service
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -40,55 +51,49 @@ class ProtocolUpdateRequest(BaseModel):
     status: Optional[str] = None
 
 
-class ProtocolSummary(BaseModel):
-    id: str
-    protocolNumber: str
-    shortTitle: str
-    phase: str
-    therapeuticArea: str
-    status: str
-    updatedAt: str
-
-    class Config:
-        from_attributes = True
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _row_to_summary(row) -> dict:
+def _graph_to_summary(p: dict) -> dict:
     return {
-        "id": row.id,
-        "protocolNumber": row.protocol_number,
-        "shortTitle": row.short_title or "",
-        "phase": row.phase or "",
-        "therapeuticArea": row.therapeutic_area or "",
-        "status": row.status or "Draft",
-        "updatedAt": row.updated_at.isoformat() if row.updated_at else "",
+        "id": p.get("id", ""),
+        "protocolNumber": p.get("protocolNumber", ""),
+        "shortTitle": p.get("shortTitle", ""),
+        "phase": p.get("phase", ""),
+        "therapeuticArea": p.get("therapeuticArea", ""),
+        "status": p.get("status", "Draft"),
+        "updatedAt": p.get("updatedAt", ""),
     }
 
 
-def _row_to_full(row) -> dict:
+def _graph_to_full(p: dict) -> dict:
+    narrative = p.get("narrativeSections", "{}")
+    if isinstance(narrative, str):
+        try:
+            narrative = json.loads(narrative)
+        except (json.JSONDecodeError, TypeError):
+            narrative = {}
+
     return {
-        "id": row.id,
-        "protocolNumber": row.protocol_number,
-        "fullTitle": row.full_title or "",
-        "shortTitle": row.short_title or "",
-        "phase": row.phase or "",
-        "studyType": row.study_type or "",
-        "therapeuticArea": row.therapeutic_area or "",
-        "indication": row.indication or "",
-        "sponsorName": row.sponsor_name or "",
-        "sampleSize": row.sample_size,
-        "status": row.status or "Draft",
-        "version": row.version or "1.0",
-        "templateId": row.template_id,
-        "studyDesignData": row.study_design_data or {},
-        "narrativeSections": row.narrative_sections or {},
-        "referenceTrials": row.reference_trials or [],
-        "createdAt": row.created_at.isoformat() if row.created_at else "",
-        "updatedAt": row.updated_at.isoformat() if row.updated_at else "",
+        "id": p.get("id", ""),
+        "protocolNumber": p.get("protocolNumber", ""),
+        "fullTitle": p.get("fullTitle", ""),
+        "shortTitle": p.get("shortTitle", ""),
+        "phase": p.get("phase", ""),
+        "studyType": p.get("studyType", ""),
+        "therapeuticArea": p.get("therapeuticArea", ""),
+        "indication": p.get("indication", ""),
+        "sponsorName": p.get("sponsorName", ""),
+        "sampleSize": p.get("sampleSize"),
+        "status": p.get("status", "Draft"),
+        "version": p.get("version", "1.0"),
+        "templateId": p.get("templateId"),
+        "studyDesignData": {},  # Design data is read via /design and /schedule endpoints
+        "narrativeSections": narrative,
+        "referenceTrials": [],  # Reference trials are read via /references endpoint
+        "createdAt": p.get("createdAt", ""),
+        "updatedAt": p.get("updatedAt", ""),
     }
 
 
@@ -97,7 +102,7 @@ def _row_to_full(row) -> dict:
 # ---------------------------------------------------------------------------
 
 @router.post("")
-def create_protocol(body: ProtocolCreateRequest, db: Session = Depends(get_db)):
+async def create_protocol(body: ProtocolCreateRequest):
     """Create a new protocol, optionally from a template."""
     overrides = {
         "protocolNumber": body.protocolNumber,
@@ -110,7 +115,10 @@ def create_protocol(body: ProtocolCreateRequest, db: Session = Depends(get_db)):
         "sponsorName": body.sponsorName,
         "sampleSize": body.sampleSize,
     }
-    template_data = template_service.create_protocol_from_template(body.template, overrides)
+    try:
+        template_data = template_service.create_protocol_from_template(body.template, overrides)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     data = {
         "id": template_data["id"],
@@ -124,51 +132,78 @@ def create_protocol(body: ProtocolCreateRequest, db: Session = Depends(get_db)):
         "sponsorName": template_data["sponsor_name"],
         "sampleSize": template_data["sample_size"],
         "templateId": body.template,
-        "studyDesignData": template_data["study_design_data"],
-        "narrativeSections": template_data["narrative_sections"],
+        "narrativeSections": template_data.get("narrative_sections", {}),
     }
 
-    row = crud.create_protocol(db, data)
-    return _row_to_full(row)
+    try:
+        async with get_session() as session:
+            p = await graph_crud.create_protocol(session, data)
+            protocol_id = p.get("id", data["id"])
+
+            # Save design + schedule entities if template provided them
+            sdd = template_data.get("study_design_data", {})
+            if sdd:
+                await graph_crud.save_design(session, protocol_id, sdd)
+                await graph_crud.save_schedule(session, protocol_id, sdd)
+    except HTTPException:
+        raise
+    except Exception as e:
+        err_msg = str(e)
+        logger.error(
+            "Failed to create protocol %s: %s\n%s",
+            body.protocolNumber, e, traceback.format_exc(),
+        )
+        # Check for Neo4j constraint violation (duplicate protocolNumber)
+        if "ConstraintValidation" in err_msg or "already exists" in err_msg:
+            raise HTTPException(
+                status_code=409,
+                detail=f"A protocol with number '{body.protocolNumber}' already exists.",
+            )
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to create protocol. Please ensure Neo4j is running and try again.",
+        )
+
+    return _graph_to_full(p)
 
 
 @router.get("")
-def list_protocols(db: Session = Depends(get_db)):
+async def list_protocols():
     """List all protocols with summary info."""
-    rows = crud.list_protocols(db)
-    return [_row_to_summary(r) for r in rows]
+    async with get_session() as session:
+        protocols = await graph_crud.list_protocols(session)
+    return [_graph_to_summary(p) for p in protocols]
 
 
 @router.get("/{protocol_id}")
-def get_protocol(protocol_id: str, db: Session = Depends(get_db)):
+async def get_protocol(protocol_id: str):
     """Get full protocol including study_design_data and narrative_sections."""
-    row = crud.get_protocol(db, protocol_id)
-    if not row:
+    async with get_session() as session:
+        p = await graph_crud.get_protocol(session, protocol_id)
+    if not p:
         raise HTTPException(status_code=404, detail="Protocol not found")
-    return _row_to_full(row)
+    return _graph_to_full(p)
 
 
 @router.put("/{protocol_id}")
-def update_protocol(
-    protocol_id: str,
-    body: ProtocolUpdateRequest,
-    db: Session = Depends(get_db),
-):
+async def update_protocol(protocol_id: str, body: ProtocolUpdateRequest):
     """Update protocol metadata (not design data). Accepts any subset of fields."""
     update_data = body.model_dump(exclude_none=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
 
-    row = crud.update_protocol(db, protocol_id, update_data)
-    if not row:
+    async with get_session() as session:
+        p = await graph_crud.update_protocol(session, protocol_id, update_data)
+    if not p:
         raise HTTPException(status_code=404, detail="Protocol not found")
-    return _row_to_full(row)
+    return _graph_to_full(p)
 
 
 @router.delete("/{protocol_id}")
-def delete_protocol(protocol_id: str, db: Session = Depends(get_db)):
+async def delete_protocol(protocol_id: str):
     """Delete a protocol."""
-    deleted = crud.delete_protocol(db, protocol_id)
+    async with get_session() as session:
+        deleted = await graph_crud.delete_protocol(session, protocol_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Protocol not found")
     return {"deleted": True, "id": protocol_id}

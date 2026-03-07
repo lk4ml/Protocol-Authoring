@@ -3,6 +3,7 @@ import useScheduleStore from '../../store/useScheduleStore';
 import useDesignStore from '../../store/useDesignStore';
 import useTerminologyStore from '../../store/useTerminologyStore';
 import ProcedurePicker from './SOA/ProcedurePicker';
+import InlineProcedureSearch from './SOA/InlineProcedureSearch';
 import TrialImporter from './SOA/TrialImporter';
 import PatternSuggestions from './SOA/PatternSuggestions';
 import BurdenAnalytics from './SOA/BurdenAnalytics';
@@ -175,6 +176,7 @@ export default function SOAModule() {
   const [quickRowName, setQuickRowName] = useState('');
   const [showQuickRow, setShowQuickRow] = useState(false);
   const [showTrialImporter, setShowTrialImporter] = useState(false);
+  const [inlineSearchAG, setInlineSearchAG] = useState(null); // { agId, sgId, parentSg }
   const quickRowRef = useRef(null);
 
   // Determine if hierarchy is available
@@ -406,6 +408,36 @@ export default function SOAModule() {
     setActivityMode('browse');
   }
 
+  // ── Inline per-category add ─────────────────────────────────────────────
+  function handleInlineAdd(agId, sgId, parentSg) {
+    setInlineSearchAG({ agId, sgId, parentSg });
+    setShowActivityPanel(false);
+    setShowTrialImporter(false);
+  }
+
+  function handleInlineAddProcedure(procData) {
+    if (!inlineSearchAG) return;
+    addActivity(
+      { ...procData, soaGroupId: inlineSearchAG.sgId, activityGroupId: inlineSearchAG.agId },
+      soaHierarchy
+    );
+  }
+
+  function handleInlineCreateCustom(prefill) {
+    setActivityForm({
+      name: prefill.name || '',
+      category: prefill.uiCategory || '',
+      sdtmDomain: '',
+    });
+    setShowActivityPanel(true);
+    setActivityMode('custom');
+    setInlineSearchAG(null);
+  }
+
+  function closeInlineSearch() {
+    setInlineSearchAG(null);
+  }
+
   function handleApplyPattern(pattern) {
     if (!pattern.activityIds || pattern.activityIds.length === 0) return;
     const toAdd = catalogActivities
@@ -589,9 +621,10 @@ export default function SOAModule() {
   /** Render Activity Group sub-header row */
   function renderActivityGroupHeader(ag, activityCount, parentSg) {
     const isCollapsed = collapsedGroups[ag.id];
+    const isInlineActive = inlineSearchAG?.agId === ag.id;
     // Use a slightly lighter version of the parent SOA group colors
     return (
-      <tr key={`ag-${ag.id}`}>
+      <tr key={`ag-${ag.id}`} className="group">
         <td
           colSpan={totalEncounterCols + 2}
           className="border-b cursor-pointer transition-opacity hover:opacity-90"
@@ -609,9 +642,31 @@ export default function SOAModule() {
               </span>
               <span className="text-[10px] text-gray-400">({activityCount})</span>
             </div>
-            {isCollapsed && (
-              <span className="text-[10px] text-gray-400 italic">collapsed</span>
-            )}
+            <div className="flex items-center gap-2">
+              {isCollapsed && (
+                <span className="text-[10px] text-gray-400 italic">collapsed</span>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isInlineActive) {
+                    closeInlineSearch();
+                  } else {
+                    handleInlineAdd(ag.id, parentSg?.id, parentSg);
+                  }
+                }}
+                className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                  isInlineActive
+                    ? 'text-indigo-600 bg-indigo-100 opacity-100'
+                    : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 opacity-0 group-hover:opacity-100'
+                }`}
+                title={`Add procedure to ${ag.name}`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </button>
+            </div>
           </div>
         </td>
       </tr>
@@ -1018,7 +1073,24 @@ export default function SOAModule() {
                       if (row.type === 'activityGroup') {
                         // Find parent SOA group for coloring
                         const parentSg = soaGroups.find((sg) => sg.id === row.ag.soaGroupId);
-                        return renderActivityGroupHeader(row.ag, row.activityCount, parentSg);
+                        return (
+                          <React.Fragment key={`ag-wrap-${row.ag.id}`}>
+                            {renderActivityGroupHeader(row.ag, row.activityCount, parentSg)}
+                            {inlineSearchAG?.agId === row.ag.id && (
+                              <InlineProcedureSearch
+                                activityGroupId={row.ag.id}
+                                soaGroupId={parentSg?.id}
+                                parentSgColors={parentSg}
+                                procedureLibrary={procedureLibrary}
+                                addedActivityNames={addedActivityNames}
+                                onAddProcedure={handleInlineAddProcedure}
+                                onCreateCustom={handleInlineCreateCustom}
+                                onClose={closeInlineSearch}
+                                totalEncounterCols={totalEncounterCols}
+                              />
+                            )}
+                          </React.Fragment>
+                        );
                       }
                       if (row.type === 'activity') {
                         return renderActivityRow(row.activity, { indent: row.activityGroup ? 2 : 1 });

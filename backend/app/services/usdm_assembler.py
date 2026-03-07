@@ -1,9 +1,9 @@
 """
 USDM v3.0 assembler service.
 
-Takes a ``ProtocolDB`` SQLAlchemy row and produces a Python dictionary that
-conforms to the CDISC Unified Study Definitions Model (USDM) v3.0 ``Study``
-structure.
+Takes a ProtocolProxy (or ProtocolDB) object and produces a Python dictionary
+that conforms to the CDISC Unified Study Definitions Model (USDM) v3.0
+``Study`` structure.
 
 The resulting hierarchy is:
 
@@ -23,11 +23,27 @@ import uuid
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..db.tables import ProtocolDB
+    from typing import Protocol as ProtocolType
 
 
 def _new_id() -> str:
     return str(uuid.uuid4())
+
+
+def _normalize_coded_field(value: Any) -> dict:
+    """Normalize a coded design field that may be a plain string or a dict.
+
+    Some protocols store interventionModel/blindingSchema as:
+    - Plain string: ``"Factorial"``, ``"Double Blind"``
+    - Dict:         ``{"code": "C12345", "decode": "Factorial", ...}``
+
+    Returns a dict with at least ``decode``; ``code`` may be empty.
+    """
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        return {"code": "", "decode": value}
+    return {"code": "", "decode": str(value) if value else ""}
 
 
 def _make_code(code: str, decode: str, code_system: str = "http://www.cdisc.org",
@@ -160,9 +176,9 @@ def assemble_usdm(protocol_db: "ProtocolDB") -> dict[str, Any]:
                 val = flat
             study_design[key] = val
 
-    # Coded design-level attributes
+    # Coded design-level attributes (may be plain string or dict)
     if study_design_data.get("interventionModel"):
-        im = study_design_data["interventionModel"]
+        im = _normalize_coded_field(study_design_data["interventionModel"])
         study_design["interventionModel"] = {
             "id": _new_id(),
             "code": im.get("code", ""),
@@ -172,7 +188,7 @@ def assemble_usdm(protocol_db: "ProtocolDB") -> dict[str, Any]:
         }
 
     if study_design_data.get("blindingSchema"):
-        bs = study_design_data["blindingSchema"]
+        bs = _normalize_coded_field(study_design_data["blindingSchema"])
         study_design["blindingSchema"] = {
             "id": _new_id(),
             "code": bs.get("code", ""),

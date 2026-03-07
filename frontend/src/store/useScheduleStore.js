@@ -13,15 +13,25 @@ function autoAssignHierarchy(activity, soaHierarchy) {
 
   const rules = soaHierarchy.autoAssignRules.byCategoryAndDomain || {};
   const defaults = soaHierarchy.autoAssignRules.defaultActivityGroup || {};
+  const nameOverrides = soaHierarchy.autoAssignRules.nameOverrides || {};
   const cat = activity.uiCategory || activity.category || '';
   const domain = activity.sdtmDomain || '';
+  const name = activity.name || '';
+
+  // Check name-based overrides first (e.g. "Informed Consent" → CONSENT)
+  const nameOverrideGroup = nameOverrides[name];
 
   const rule = rules[cat] || {};
   const soaGroupId = activity.soaGroupId || rule.soaGroup || 'SAFETY';
   const domainMap = rule.domainMap || {};
-  const activityGroupId = activity.activityGroupId || domainMap[domain] || defaults[soaGroupId] || null;
+  const activityGroupId = activity.activityGroupId || nameOverrideGroup || domainMap[domain] || defaults[soaGroupId] || null;
 
-  return { ...activity, soaGroupId, activityGroupId };
+  // Resolve the soaGroupId from the activityGroup's parent if we have hierarchy data
+  const activityGroups = soaHierarchy.activityGroups || [];
+  const matchedGroup = activityGroups.find(g => g.id === activityGroupId);
+  const resolvedSoaGroupId = matchedGroup?.soaGroupId || soaGroupId;
+
+  return { ...activity, soaGroupId: resolvedSoaGroupId, activityGroupId };
 }
 
 /**

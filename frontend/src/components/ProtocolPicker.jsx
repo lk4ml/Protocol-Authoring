@@ -1,26 +1,88 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import useProtocolStore from '../store/useProtocolStore';
 import useReferenceStore from '../store/useReferenceStore';
 import { parseCtGovResponse } from '../utils/parseCtGovTrial';
 import * as referencesApi from '../api/references';
 
-/* ═══════════════════════════════════════════════════════════════════════
- *  PLATFORM NAME OPTIONS (change the one used in BRAND below)
- *  ───────────────────────────────────────────────────────────────────
- *  1. ProtoVerse    – "Protocol Universe" — the hub for everything protocol
- *  2. TrialForge    – forging trial designs with precision
- *  3. ProtoSync     – sync design, standards & data in one place
- *  4. ClinSpec      – clinical specification platform
- *  5. ProtocolEdge  – the competitive edge in protocol authoring
- * ═══════════════════════════════════════════════════════════════════════ */
+/* ─── Workflow definitions — what each Solution leads to ─────────── */
+const WORKFLOW_CONFIG = {
+  design: {
+    route: 'design',
+    title: 'Study Designer',
+    subtitle: 'Design your trial architecture',
+    color: 'brand',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+      </svg>
+    ),
+    steps: [
+      'Create or select your study below',
+      'Define study arms, epochs & elements visually',
+      'Import reference designs from ClinicalTrials.gov',
+      'Export your USDM v3.0 compliant design',
+    ],
+  },
+  soa: {
+    route: 'soa',
+    title: 'SOA Builder',
+    subtitle: 'Build your Schedule of Activities',
+    color: 'purple',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+      </svg>
+    ),
+    steps: [
+      'Create a new study or select an existing one',
+      'Import reference trial procedures from ClinicalTrials.gov',
+      'Build activity × visit matrix with CDISC procedures',
+      'Review burden analytics & export USDM package',
+    ],
+  },
+  eligibility: {
+    route: 'eligibility',
+    title: 'Eligibility Optimizer',
+    subtitle: 'Craft inclusion & exclusion criteria',
+    color: 'emerald',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+      </svg>
+    ),
+    steps: [
+      'Create or select your study below',
+      'Import reference trials for I/E criteria suggestions',
+      'Craft inclusion & exclusion criteria with AI recommendations',
+      'Adopt criteria from comparable trials with one click',
+    ],
+  },
+  burden: {
+    route: 'soa',
+    title: 'Burden & Complexity Analyst',
+    subtitle: 'Analyze patient burden & trial complexity',
+    color: 'amber',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+      </svg>
+    ),
+    steps: [
+      'Create or select your study below',
+      'Build your Schedule of Activities first',
+      'View real-time burden metrics per visit: time, blood volume, RVU',
+      'Compare against benchmarks & optimize',
+    ],
+  },
+};
 
 const BRAND = {
-  name: 'TrialForge',
+  name: 'ProtoHelix',
   tagline: 'AI-Powered Clinical Protocol Authoring',
   mission: 'Design smarter protocols. Accelerate clinical development.',
   description:
-    'TrialForge streamlines clinical trial protocol authoring with CDISC standards integration, real-time reference intelligence from ClinicalTrials.gov, and systematic burden analytics — all in one unified platform.',
+    'ProtoHelix streamlines clinical trial protocol authoring with CDISC standards integration, real-time reference intelligence from ClinicalTrials.gov, and systematic burden analytics — all in one unified platform.',
 };
 
 const FEATURES = [
@@ -90,9 +152,19 @@ const Spinner = ({ className = 'h-4 w-4 text-white' }) => (
  * ═══════════════════════════════════════════════════════════════════════ */
 export default function ProtocolPicker() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const protocols = useProtocolStore((s) => s.protocols);
   const loadProtocols = useProtocolStore((s) => s.loadProtocols);
   const createProtocol = useProtocolStore((s) => s.createProtocol);
+
+  /* ── Active workflow from Solutions dropdown ─────────────────────── */
+  const workflowKey = searchParams.get('workflow');
+  const activeWorkflow = workflowKey ? WORKFLOW_CONFIG[workflowKey] : null;
+
+  const clearWorkflow = () => {
+    searchParams.delete('workflow');
+    setSearchParams(searchParams, { replace: true });
+  };
 
   /* ── Workspace section ref for scrolling ─────────────────────────── */
   const workspaceRef = useRef(null);
@@ -114,6 +186,16 @@ export default function ProtocolPicker() {
   useEffect(() => { useReferenceStore.getState().reset(); }, []);
   useEffect(() => { loadProtocols(); }, [loadProtocols]);
 
+  /* ── Auto-scroll to workspace when arriving with a workflow ─────── */
+  useEffect(() => {
+    if (activeWorkflow && workspaceRef.current) {
+      const timer = setTimeout(() => {
+        workspaceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [activeWorkflow]);
+
   /* ── Handlers (unchanged logic) ──────────────────────────────────── */
   async function handleQuickCreate(e) {
     e.preventDefault();
@@ -130,7 +212,8 @@ export default function ProtocolPicker() {
         sponsorName: '',
         template: 'blank',
       });
-      navigate(`/protocol/${newProtocol._id || newProtocol.id}`);
+      const pid = newProtocol._id || newProtocol.id;
+      navigate(activeWorkflow ? `/protocol/${pid}/${activeWorkflow.route}` : `/protocol/${pid}`);
     } catch (err) {
       setError(err.message || 'Failed to create study.');
     } finally { setCreating(false); }
@@ -151,7 +234,7 @@ export default function ProtocolPicker() {
       setNctPreviews((prev) => [...prev, parsed]);
       setNctId('');
     } catch (err) {
-      setNctError(err.message || 'Failed to fetch trial data.');
+      setNctError(err.response?.data?.detail || err.message || 'Failed to fetch trial data.');
     } finally { setNctLoading(false); }
   }
 
@@ -175,16 +258,29 @@ export default function ProtocolPicker() {
         template: 'blank',
       });
       const protocolId = newProtocol._id || newProtocol.id;
+      const refErrors = [];
       for (const trial of nctPreviews) {
-        try { await referencesApi.addReference(protocolId, trial); } catch { /* dup ok */ }
+        try {
+          await referencesApi.addReference(protocolId, trial);
+        } catch (refErr) {
+          // 409 = duplicate, which is fine
+          if (refErr.response?.status !== 409) {
+            refErrors.push(trial.nctId || 'unknown');
+          }
+        }
       }
-      navigate(`/protocol/${protocolId}`);
+      if (refErrors.length > 0) {
+        console.warn('Failed to save references:', refErrors);
+      }
+      navigate(activeWorkflow ? `/protocol/${protocolId}/${activeWorkflow.route}` : `/protocol/${protocolId}`);
     } catch (err) {
       setError(err.message || 'Failed to create study.');
     } finally { setCreating(false); }
   }
 
-  function handleOpenProtocol(id) { navigate(`/protocol/${id}`); }
+  function handleOpenProtocol(id) {
+    navigate(activeWorkflow ? `/protocol/${id}/${activeWorkflow.route}` : `/protocol/${id}`);
+  }
 
   function scrollToWorkspace() {
     workspaceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -250,9 +346,65 @@ export default function ProtocolPicker() {
       </nav>
 
       {/* ╔═══════════════════════════════════════════════════════════════╗
+       *  ║  WORKFLOW CONTEXT BANNER (when arriving from Solutions)       ║
+       *  ╚═══════════════════════════════════════════════════════════════╝ */}
+      {activeWorkflow && (
+        <section className="pt-20 pb-0 px-6 bg-gradient-to-b from-brand-50/80 to-white">
+          <div className="max-w-5xl mx-auto">
+            <div className="relative bg-white rounded-2xl border border-brand-200/60 shadow-lg shadow-brand-100/30 overflow-hidden">
+              {/* Close / dismiss */}
+              <button
+                onClick={clearWorkflow}
+                className="absolute top-4 right-4 p-1.5 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors z-10"
+                title="Dismiss"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              <div className="p-6 sm:p-8">
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2.5 rounded-xl bg-brand-50 text-brand-600">
+                    {activeWorkflow.icon}
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">{activeWorkflow.title}</h2>
+                    <p className="text-sm text-gray-500">{activeWorkflow.subtitle}</p>
+                  </div>
+                </div>
+
+                {/* Steps */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  {activeWorkflow.steps.map((step, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                        i === 0
+                          ? 'bg-brand-600 text-white ring-2 ring-brand-200'
+                          : 'bg-gray-100 text-gray-400'
+                      }`}>
+                        {i + 1}
+                      </div>
+                      <p className={`text-sm leading-snug pt-1 ${i === 0 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                        {step}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Accent stripe */}
+              <div className="h-1 bg-gradient-to-r from-brand-500 via-purple-500 to-brand-400" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ╔═══════════════════════════════════════════════════════════════╗
        *  ║  HERO SECTION                                                ║
        *  ╚═══════════════════════════════════════════════════════════════╝ */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden hero-mesh">
+      <section className={`relative ${activeWorkflow ? 'pt-10 pb-12' : 'pt-32 pb-20'} px-6 overflow-hidden hero-mesh`}>
         {/* Decorative background */}
         <div className="absolute inset-0 hero-gradient-subtle" />
         <div className="absolute top-20 right-0 w-96 h-96 bg-brand-200/20 rounded-full blur-3xl" />
@@ -675,9 +827,13 @@ export default function ProtocolPicker() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-xl font-extrabold text-gray-900">Your Studies</h3>
+                <h3 className="text-xl font-extrabold text-gray-900">
+                  {activeWorkflow ? `Select a Study → ${activeWorkflow.title}` : 'Your Studies'}
+                </h3>
                 <p className="text-sm text-gray-400 mt-0.5">
-                  {studyCount > 0
+                  {activeWorkflow && studyCount > 0
+                    ? `Click any study to open it in ${activeWorkflow.title}`
+                    : studyCount > 0
                     ? `${studyCount} ${studyCount === 1 ? 'study' : 'studies'} saved`
                     : 'No studies yet — create your first one above'}
                 </p>

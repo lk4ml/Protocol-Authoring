@@ -1,16 +1,26 @@
+"""
+Study design router — Neo4j graph-only.
+
+Reads/writes design entities (arms, epochs, cells, elements, markers,
+flow overrides, objectives, eligibility criteria) to the Neo4j graph.
+
+Includes audit trail recording and versioning snapshots on save.
+"""
+
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException
 
-from ..database import get_db
-from ..db import crud
+from ..graph import get_session
+from ..graph import crud as graph_crud
+from ..graph import audit
+from ..graph import versioning
 from ..models.requests import StudyDesignUpdateRequest
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Keys that belong to the study design portion of study_design_data
+# Keys that belong to the study design portion
 DESIGN_KEYS = [
     "studyArms",
     "studyEpochs",
@@ -24,97 +34,117 @@ DESIGN_KEYS = [
     "objectives",
 ]
 
-
-def _normalize_eligibility(raw):
-    """Normalize eligibilityCriteria to {inclusion: [], exclusion: []} dict format."""
-    if isinstance(raw, list):
-        return {
-            "inclusion": [c for c in raw if c.get("category") == "inclusion"],
-            "exclusion": [c for c in raw if c.get("category") == "exclusion"],
-        }
-    if isinstance(raw, dict) and ("inclusion" in raw or "exclusion" in raw):
-        return raw
-    return {"inclusion": [], "exclusion": []}
-
-
-async def _try_graph_read(protocol_id: str) -> dict | None:
-    """Attempt to read design from Neo4j. Returns None if unavailable."""
-    try:
-        from ..graph import get_session
-        from ..graph import crud as graph_crud
-        async with get_session() as session:
-            return await graph_crud.get_design(session, protocol_id)
-    except Exception as e:
-        logger.debug(f"Graph read failed, falling back to SQLite: {e}")
-        return None
-
-
-def _design_from_sqlite(protocol) -> dict:
-    """Extract design dict from SQLite protocol row."""
-    sdd = protocol.study_design_data or {}
-    scalar_keys = ("interventionModel", "blindingSchema")
-    design = {}
-    for key in DESIGN_KEYS:
-        if key in scalar_keys:
-            design[key] = sdd.get(key, None)
-        elif key == "eligibilityCriteria":
-            design[key] = _normalize_eligibility(sdd.get(key))
-        else:
-            design[key] = sdd.get(key, [])
-    return design
+# Map design list-keys -> entity type names for versioning
+_DESIGN_ENTITY_MAP = {
+    "studyArms": "StudyArm",
+    "studyEpochs": "StudyEpoch",
+    "studyElements": "StudyElement",
+    "studyCells": "StudyCell",
+    "studyMarkers": "StudyMarker",
+    "studyFlowOverrides": "StudyFlowOverride",
+    "objectives": "Objective",
+}
 
 
 @router.get("/{protocol_id}/design")
-async def get_study_design(protocol_id: str, db: Session = Depends(get_db)):
-    """Return the study design portion of study_design_data."""
-    # Try Neo4j first
-    graph_result = await _try_graph_read(protocol_id)
-    if graph_result is not None:
-        return graph_result
-
-    # Fallback to SQLite
-    protocol = crud.get_protocol(db, protocol_id)
-    if not protocol:
+async def get_study_design(protocol_id: str):
+    """Return the study design portion from the graph."""
+    async with get_session() as session:
+        design = await graph_crud.get_design(session, protocol_id)
+    if design is None:
         raise HTTPException(status_code=404, detail="Protocol not found")
-    return _design_from_sqlite(protocol)
+    return design
 
 
 @router.put("/{protocol_id}/design")
-def update_study_design(
+async def update_study_design(
     protocol_id: str,
     body: StudyDesignUpdateRequest,
-    db: Session = Depends(get_db),
 ):
     """
     Save the full study design.
 
     Validates incoming data via StudyDesignUpdateRequest (Pydantic).
-    Merges only provided keys into study_design_data.
+    Merges only provided keys — graph CRUD uses MERGE/upsert per-key.
+
+    After save, records audit trail and creates versioning snapshots.
     """
-    protocol = crud.get_protocol(db, protocol_id)
-    if not protocol:
-        raise HTTPException(status_code=404, detail="Protocol not found")
+    async with get_session() as session:
+        # Check protocol exists
+        proto = await graph_crud.get_protocol(session, protocol_id)
+        if not proto:
+            raise HTTPException(status_code=404, detail="Protocol not found")
 
-    # Start from existing data so we don't clobber schedule / objectives / etc.
-    merged = dict(protocol.study_design_data or {})
+        # Build the data payload with only provided keys
+        payload = body.model_dump(exclude_none=True)
 
-    payload = body.model_dump(exclude_none=True)
-    for key in DESIGN_KEYS:
-        if key in payload:
-            merged[key] = payload[key]
+        # For merge semantics: read current design, then overlay new keys
+        # This ensures we don't clobber schedule or other keys
+        current_design = await graph_crud.get_design(session, protocol_id) or {}
 
-    updated = crud.update_study_design(db, protocol_id, merged)
-    if not updated:
-        raise HTTPException(status_code=500, detail="Failed to update study design")
+        merged = {}
+        for key in DESIGN_KEYS:
+            if key in payload:
+                merged[key] = payload[key]
+            elif key in current_design:
+                merged[key] = current_design[key]
 
-    # Return the design portion back to the caller
-    result = {}
-    scalar_keys = ("interventionModel", "blindingSchema")
-    for key in DESIGN_KEYS:
-        if key in scalar_keys:
-            result[key] = merged.get(key, None)
-        elif key == "eligibilityCriteria":
-            result[key] = _normalize_eligibility(merged.get(key))
-        else:
-            result[key] = merged.get(key, [])
-    return result
+        # Save to graph (save_design handles each key independently)
+        await graph_crud.save_design(session, protocol_id, merged)
+
+        # --- Audit trail (non-blocking) ---
+        try:
+            entity_parts = []
+            total_count = 0
+            for key in DESIGN_KEYS:
+                val = merged.get(key)
+                if isinstance(val, list):
+                    entity_parts.append(f"{len(val)} {key}")
+                    total_count += len(val)
+                elif isinstance(val, dict) and key == "eligibilityCriteria":
+                    inc = len(val.get("inclusion", []))
+                    exc = len(val.get("exclusion", []))
+                    entity_parts.append(f"{inc + exc} eligibilityCriteria")
+                    total_count += inc + exc
+            description = f"Design save: {', '.join(entity_parts)}" if entity_parts else "Design save"
+            await audit.record_bulk_action(
+                session, protocol_id,
+                action_type="UPDATE",
+                entity_type="Design",
+                entity_count=total_count,
+                description=description,
+            )
+        except Exception as e:
+            logger.warning(f"Audit recording failed (non-blocking): {e}")
+
+        # --- Versioning snapshots (non-blocking) ---
+        try:
+            await versioning.ensure_protocol_root(session, protocol_id)
+            for key, entity_type in _DESIGN_ENTITY_MAP.items():
+                entities = merged.get(key, [])
+                if isinstance(entities, list) and entities:
+                    await versioning.bulk_version_entities(
+                        session, entity_type, protocol_id, entities,
+                        id_field="id",
+                    )
+            # EligibilityCriteria — flatten dict form to list for versioning
+            ec = merged.get("eligibilityCriteria")
+            if ec:
+                if isinstance(ec, dict):
+                    criteria = ec.get("inclusion", []) + ec.get("exclusion", [])
+                elif isinstance(ec, list):
+                    criteria = ec
+                else:
+                    criteria = []
+                if criteria:
+                    await versioning.bulk_version_entities(
+                        session, "EligibilityCriterion", protocol_id, criteria,
+                        id_field="id",
+                    )
+        except Exception as e:
+            logger.warning(f"Versioning snapshot failed (non-blocking): {e}")
+
+        # Read back the saved design to return to caller
+        result = await graph_crud.get_design(session, protocol_id)
+
+    return result or {}

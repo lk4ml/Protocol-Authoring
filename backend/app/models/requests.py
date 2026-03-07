@@ -42,6 +42,9 @@ class ScheduleInstanceRequest(BaseModel):
     activityId: Optional[str] = Field(default=None, exclude=True)
     conditionality: Optional[str] = Field(default=None, exclude=True)
 
+    class Config:
+        extra = "allow"
+
     @model_validator(mode="before")
     @classmethod
     def normalize_legacy_fields(cls, data):
@@ -74,6 +77,9 @@ class TimingRequest(BaseModel):
     windowUpper: Optional[str] = None
     windowLabel: Optional[str] = None
 
+    class Config:
+        extra = "allow"
+
 
 class ScheduleTimelineRequest(BaseModel):
     id: str = Field(default_factory=_new_uuid)
@@ -83,6 +89,9 @@ class ScheduleTimelineRequest(BaseModel):
     entryCondition: Optional[str] = None
     timings: list[TimingRequest] = []
     instances: list[ScheduleInstanceRequest] = []
+
+    class Config:
+        extra = "allow"
 
 
 class EncounterRequest(BaseModel):
@@ -99,6 +108,9 @@ class EncounterRequest(BaseModel):
     week: Optional[float] = None
     studyDay: Optional[int] = None
     visitWindow: Optional[str] = None
+
+    class Config:
+        extra = "allow"
 
 
 class ActivityRequest(BaseModel):
@@ -142,7 +154,7 @@ class SoaGroupRequest(BaseModel):
 class ActivityGroupRequest(BaseModel):
     id: str
     name: str
-    soaGroupId: str
+    soaGroupId: Optional[str] = None
     order: int = 0
 
     class Config:
@@ -213,6 +225,23 @@ class ReferenceTrialRequest(BaseModel):
 
     class Config:
         extra = "allow"
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_field_names(cls, data):
+        """Map frontend field names to graph schema names."""
+        if isinstance(data, dict):
+            # Frontend sends "sponsorName" but graph expects "sponsor"
+            if "sponsorName" in data and not data.get("sponsor"):
+                data["sponsor"] = data.pop("sponsorName")
+            elif "sponsorName" in data:
+                data.pop("sponsorName", None)
+            # Frontend sends "fetchedAt" but graph expects "parsedAt"
+            if "fetchedAt" in data and not data.get("parsedAt"):
+                data["parsedAt"] = data.pop("fetchedAt")
+            elif "fetchedAt" in data:
+                data.pop("fetchedAt", None)
+        return data
 
     @field_validator("nctId")
     @classmethod

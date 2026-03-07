@@ -11,23 +11,21 @@ import useAutoSave from '../../hooks/useAutoSave';
 import ReferencePanel from '../reference/ReferencePanel';
 
 /**
- * AppShell - Main layout wrapper for the protocol workspace.
- * Provides sidebar navigation, header bar, and content area.
+ * AppShell - Main layout wrapper for the study workspace.
+ * Provides sequential sidebar navigation, header bar, and content area.
  * Loads protocol data and terminology on mount.
- * Renders the slide-out ReferencePanel alongside the main content.
  */
 export default function AppShell() {
   const { id: protocolId } = useParams();
   const loadedRef = useRef(null);
   const panelOpen = useReferenceStore((s) => s.panelOpen);
 
+  const basePath = `/study/${protocolId}`;
+
   // Auto-save hook watches dirty flags
   useAutoSave(protocolId);
 
   // Load all data once when protocolId changes.
-  // We call getState() directly instead of using selector-returned functions
-  // in the dependency array, because Zustand selectors can return new
-  // function references on each render which would cause an infinite loop.
   useEffect(() => {
     if (!protocolId || loadedRef.current === protocolId) return;
     loadedRef.current = protocolId;
@@ -42,7 +40,7 @@ export default function AppShell() {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar navigation */}
-      <Sidebar />
+      <Sidebar basePath={basePath} homeUrl="/workspace" />
 
       {/* Main content area */}
       <div className="flex flex-col flex-1 min-w-0">

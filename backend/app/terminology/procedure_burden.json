@@ -62,7 +62,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "ADMIN",
-      "derivation": "Clinical practice standard; no billable procedure"
+      "derivation": "Clinical practice standard; no billable procedure",
+      "name": "Informed Consent",
+      "nameAliases": [
+        "Informed Consent",
+        "Assent",
+        "Subject is Randomized"
+      ]
     },
     "core-demographics": {
       "timeMinutes": 10,
@@ -81,7 +87,15 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "ADMIN",
-      "derivation": "CRF data entry; no billable procedure"
+      "derivation": "CRF data entry; no billable procedure",
+      "name": "Birth Date and Time",
+      "nameAliases": [
+        "Birth Date and Time",
+        "Demographics Assessment",
+        "Race",
+        "Ethnicity",
+        "Sex"
+      ]
     },
     "core-inclusion-exclusion": {
       "timeMinutes": 15,
@@ -100,7 +114,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "ADMIN",
-      "derivation": "Eligibility assessment; no billable procedure"
+      "derivation": "Eligibility assessment; no billable procedure",
+      "name": "Inclusion/Exclusion Criteria",
+      "nameAliases": [
+        "Inclusion/Exclusion Criteria",
+        "Eligibility Assessment"
+      ]
     },
     "core-randomization": {
       "timeMinutes": 5,
@@ -119,7 +138,11 @@
       "patientFacing": false,
       "requiresFasting": false,
       "category": "ADMIN",
-      "derivation": "IWRS/IRT system; no billable procedure"
+      "derivation": "IWRS/IRT system; no billable procedure",
+      "name": "Randomization",
+      "nameAliases": [
+        "Randomization"
+      ]
     },
     "core-medical-history": {
       "timeMinutes": 20,
@@ -138,7 +161,15 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "ADMIN",
-      "derivation": "CMS PFS CPT 99202 (new patient hx)"
+      "derivation": "CMS PFS CPT 99202 (new patient hx)",
+      "name": "Medical History",
+      "nameAliases": [
+        "Medical History",
+        "Alcohol Use History",
+        "Smoking History",
+        "Tobacco Use History",
+        "Substance Use History"
+      ]
     },
     "core-prior-concomitant-meds": {
       "timeMinutes": 10,
@@ -157,7 +188,11 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "ADMIN",
-      "derivation": "Medication reconciliation; no billable procedure"
+      "derivation": "Medication reconciliation; no billable procedure",
+      "name": "Prior and Concomitant Medications",
+      "nameAliases": [
+        "Prior and Concomitant Medications"
+      ]
     },
     "core-subject-disposition": {
       "timeMinutes": 5,
@@ -176,7 +211,13 @@
       "patientFacing": false,
       "requiresFasting": false,
       "category": "ADMIN",
-      "derivation": "CRF data entry; no billable procedure"
+      "derivation": "CRF data entry; no billable procedure",
+      "name": "Subject Disposition",
+      "nameAliases": [
+        "Subject Disposition",
+        "Subject Status",
+        "Study Completion"
+      ]
     },
     "core-protocol-deviations": {
       "timeMinutes": 5,
@@ -195,7 +236,12 @@
       "patientFacing": false,
       "requiresFasting": false,
       "category": "ADMIN",
-      "derivation": "Documentation; no billable procedure"
+      "derivation": "Documentation; no billable procedure",
+      "name": "Protocol Deviation",
+      "nameAliases": [
+        "Protocol Deviation",
+        "Protocol Deviations"
+      ]
     },
     "core-physical-exam": {
       "timeMinutes": 15,
@@ -214,7 +260,14 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "CLINICAL",
-      "derivation": "CMS PFS CPT 99213 (E/M level 3)"
+      "derivation": "CMS PFS CPT 99213 (E/M level 3)",
+      "name": "Physical Examination",
+      "nameAliases": [
+        "Physical Examination",
+        "Targeted Physical Examination",
+        "Height and Weight",
+        "Skin Examination"
+      ]
     },
     "core-vital-signs": {
       "timeMinutes": 5,
@@ -233,7 +286,17 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "CLINICAL",
-      "derivation": "PMC8249906 time-motion study; CMS PFS"
+      "derivation": "PMC8249906 time-motion study; CMS PFS",
+      "name": "Vital Signs",
+      "nameAliases": [
+        "Vital Signs",
+        "Blood Pressure",
+        "Heart Rate",
+        "Respiratory Rate",
+        "Body Temperature",
+        "Oxygen Saturation",
+        "Pulse Oximetry"
+      ]
     },
     "core-12-lead-ecg": {
       "timeMinutes": 10,
@@ -252,7 +315,21 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "CLINICAL",
-      "derivation": "CMS PFS CPT 93000 (ECG complete)"
+      "derivation": "CMS PFS CPT 93000 (ECG complete)",
+      "name": "12-Lead ECG",
+      "nameAliases": [
+        "12-Lead ECG",
+        "Electrocardiogram",
+        "ECG Measurement",
+        "ECG Test",
+        "QTc Measurement",
+        "QTcF Interval Measurement",
+        "QTcB Interval Measurement",
+        "QT Interval Measurement",
+        "PR Interval Measurement",
+        "QRS Duration Measurement",
+        "Heart Rate Measurement"
+      ]
     },
     "core-body-weight": {
       "timeMinutes": 2,
@@ -271,7 +348,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "CLINICAL",
-      "derivation": "Included in vital signs; LOINC 29463-7"
+      "derivation": "Included in vital signs; LOINC 29463-7",
+      "name": "Body Weight",
+      "nameAliases": [
+        "Body Weight",
+        "Weight Measurement",
+        "Body Weight Measurement"
+      ]
     },
     "core-body-height": {
       "timeMinutes": 2,
@@ -290,7 +373,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "CLINICAL",
-      "derivation": "Included in vital signs; LOINC 8302-2"
+      "derivation": "Included in vital signs; LOINC 8302-2",
+      "name": "Body Height",
+      "nameAliases": [
+        "Body Height",
+        "Height Measurement",
+        "Standing Height Measurement"
+      ]
     },
     "core-bmi": {
       "timeMinutes": 1,
@@ -309,7 +398,12 @@
       "patientFacing": false,
       "requiresFasting": false,
       "category": "CLINICAL",
-      "derivation": "Calculated from ht/wt; LOINC 39156-5"
+      "derivation": "Calculated from ht/wt; LOINC 39156-5",
+      "name": "Body Mass Index",
+      "nameAliases": [
+        "Body Mass Index",
+        "BMI"
+      ]
     },
     "core-ecog-ps": {
       "timeMinutes": 3,
@@ -328,7 +422,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "CLINICAL",
-      "derivation": "Clinician assessment; no billable procedure"
+      "derivation": "Clinician assessment; no billable procedure",
+      "name": "ECOG Performance Status",
+      "nameAliases": [
+        "ECOG Performance Status",
+        "ECOG PS",
+        "Performance Status"
+      ]
     },
     "core-neuro-exam": {
       "timeMinutes": 20,
@@ -347,7 +447,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "CLINICAL",
-      "derivation": "CMS PFS CPT 99214 (E/M level 4)"
+      "derivation": "CMS PFS CPT 99214 (E/M level 4)",
+      "name": "Neurological Examination",
+      "nameAliases": [
+        "Neurological Examination",
+        "Neuro Exam"
+      ]
     },
     "core-hematology-cbc": {
       "timeMinutes": 5,
@@ -366,7 +471,27 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 85025 $10.59; LOINC 58410-2; EDTA 3mL"
+      "derivation": "CMS CLFS CPT 85025 $10.59; LOINC 58410-2; EDTA 3mL",
+      "name": "Hematology",
+      "nameAliases": [
+        "Hematology",
+        "Complete Blood Count",
+        "CBC",
+        "Blood Cell Count",
+        "White Blood Cell Count",
+        "Red Blood Cell Count",
+        "Platelet Count",
+        "Hemoglobin Measurement",
+        "Hematocrit Measurement",
+        "Absolute Neutrophil Count",
+        "Absolute Lymphocyte Count",
+        "Absolute Monocyte Count",
+        "Absolute Eosinophil Count",
+        "Absolute Basophil Count",
+        "Mean Corpuscular Volume Measurement",
+        "Mean Corpuscular Hemoglobin Measurement",
+        "Reticulocyte Count"
+      ]
     },
     "core-comprehensive-metabolic": {
       "timeMinutes": 5,
@@ -385,7 +510,23 @@
       "patientFacing": true,
       "requiresFasting": true,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 80053 $14.49; LOINC 24323-8; SST 5mL"
+      "derivation": "CMS CLFS CPT 80053 $14.49; LOINC 24323-8; SST 5mL",
+      "name": "Chemistry Test",
+      "nameAliases": [
+        "Chemistry Test",
+        "Comprehensive Metabolic Panel",
+        "Basic Metabolic Panel",
+        "Electrolyte Panel",
+        "Sodium Measurement",
+        "Potassium Measurement",
+        "Chloride Measurement",
+        "Bicarbonate Measurement",
+        "Calcium Measurement",
+        "Glucose Measurement",
+        "Blood Urea Nitrogen Measurement",
+        "Magnesium Measurement",
+        "Phosphorus Measurement"
+      ]
     },
     "core-liver-function": {
       "timeMinutes": 5,
@@ -404,7 +545,21 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 80076 $11.21; LOINC 24325-3; SST 5mL"
+      "derivation": "CMS CLFS CPT 80076 $11.21; LOINC 24325-3; SST 5mL",
+      "name": "Liver Function Test",
+      "nameAliases": [
+        "Liver Function Test",
+        "Hepatic Function Panel",
+        "ALT Measurement",
+        "AST Measurement",
+        "Alkaline Phosphatase Measurement",
+        "Total Bilirubin Measurement",
+        "Direct Bilirubin Measurement",
+        "Albumin Measurement",
+        "Total Protein Measurement",
+        "GGT Measurement",
+        "Gamma-Glutamyl Transferase Measurement"
+      ]
     },
     "core-renal-function": {
       "timeMinutes": 5,
@@ -423,7 +578,18 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 82565 $7.18; LOINC 2160-0 (creatinine); SST 5mL"
+      "derivation": "CMS CLFS CPT 82565 $7.18; LOINC 2160-0 (creatinine); SST 5mL",
+      "name": "Renal Function",
+      "nameAliases": [
+        "Renal Function",
+        "Kidney Function",
+        "Creatinine Measurement",
+        "Creatinine Clearance",
+        "eGFR Measurement",
+        "Blood Urea Nitrogen",
+        "Urea Nitrogen Measurement",
+        "Cystatin C Measurement"
+      ]
     },
     "core-coagulation": {
       "timeMinutes": 5,
@@ -442,7 +608,16 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 85610+85730 $5.64+$9.06; LOINC 5902-2; Citrate 2.7mL"
+      "derivation": "CMS CLFS CPT 85610+85730 $5.64+$9.06; LOINC 5902-2; Citrate 2.7mL",
+      "name": "Coagulation Panel",
+      "nameAliases": [
+        "Coagulation Panel",
+        "Coagulation",
+        "PT Measurement",
+        "INR Measurement",
+        "aPTT Measurement",
+        "Fibrinogen Measurement"
+      ]
     },
     "core-urinalysis": {
       "timeMinutes": 5,
@@ -461,7 +636,18 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 81003 $3.60; LOINC 24357-6; urine specimen"
+      "derivation": "CMS CLFS CPT 81003 $3.60; LOINC 24357-6; urine specimen",
+      "name": "Urinalysis",
+      "nameAliases": [
+        "Urinalysis",
+        "Urine Analysis",
+        "Urine Dipstick Test",
+        "Urine Test",
+        "Urine Protein Measurement",
+        "Urine Creatinine Measurement",
+        "Albumin To Creatinine Protein Ratio Measurement",
+        "Protein to Creatinine Ratio Measurement"
+      ]
     },
     "core-thyroid-function": {
       "timeMinutes": 5,
@@ -480,7 +666,15 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 84443 $23.05; LOINC 3016-3; SST 5mL"
+      "derivation": "CMS CLFS CPT 84443 $23.05; LOINC 3016-3; SST 5mL",
+      "name": "Thyroid Function",
+      "nameAliases": [
+        "Thyroid Function",
+        "TSH Measurement",
+        "Free T4 Measurement",
+        "Free T3 Measurement",
+        "Thyroid Panel"
+      ]
     },
     "core-lipid-panel": {
       "timeMinutes": 5,
@@ -499,7 +693,15 @@
       "patientFacing": true,
       "requiresFasting": true,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 80061 $18.44; LOINC 24331-1; SST 5mL; fasting required"
+      "derivation": "CMS CLFS CPT 80061 $18.44; LOINC 24331-1; SST 5mL; fasting required",
+      "name": "Lipid Panel",
+      "nameAliases": [
+        "Lipid Panel",
+        "Total Cholesterol Measurement",
+        "LDL Cholesterol Measurement",
+        "HDL Cholesterol Measurement",
+        "Triglyceride Measurement"
+      ]
     },
     "core-pregnancy-test": {
       "timeMinutes": 5,
@@ -518,7 +720,14 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 84703 $9.27; LOINC 2106-3; SST 5mL"
+      "derivation": "CMS CLFS CPT 84703 $9.27; LOINC 2106-3; SST 5mL",
+      "name": "Pregnancy Test",
+      "nameAliases": [
+        "Pregnancy Test",
+        "Serum Pregnancy Test",
+        "Beta-hCG Measurement",
+        "hCG Measurement"
+      ]
     },
     "core-urine-drug-screen": {
       "timeMinutes": 5,
@@ -537,7 +746,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "LABORATORY",
-      "derivation": "CMS CLFS CPT 80305 $20.33; LOINC 19295-5; urine specimen"
+      "derivation": "CMS CLFS CPT 80305 $20.33; LOINC 19295-5; urine specimen",
+      "name": "Urine Drug Screen",
+      "nameAliases": [
+        "Urine Drug Screen",
+        "Drug Screen",
+        "Drug Test"
+      ]
     },
     "core-ae-recording": {
       "timeMinutes": 10,
@@ -556,7 +771,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "SAFETY",
-      "derivation": "Adverse event interview and CRF documentation"
+      "derivation": "Adverse event interview and CRF documentation",
+      "name": "Adverse Event",
+      "nameAliases": [
+        "Adverse Event",
+        "Adverse Events Recording",
+        "AE Recording"
+      ]
     },
     "core-sae-reporting": {
       "timeMinutes": 15,
@@ -575,7 +796,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "SAFETY",
-      "derivation": "SAE narrative, causality assessment, MedWatch reporting"
+      "derivation": "SAE narrative, causality assessment, MedWatch reporting",
+      "name": "Serious Adverse Event",
+      "nameAliases": [
+        "Serious Adverse Event",
+        "SAE Reporting"
+      ]
     },
     "core-conmed-review": {
       "timeMinutes": 5,
@@ -594,7 +820,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "SAFETY",
-      "derivation": "Medication reconciliation review"
+      "derivation": "Medication reconciliation review",
+      "name": "Concomitant Medications",
+      "nameAliases": [
+        "Concomitant Medications",
+        "Prior Medications",
+        "Concomitant Medication Review"
+      ]
     },
     "core-pregnancy-safety": {
       "timeMinutes": 5,
@@ -613,7 +845,11 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "SAFETY",
-      "derivation": "CMS CLFS CPT 84703; safety pregnancy test (serum)"
+      "derivation": "CMS CLFS CPT 84703; safety pregnancy test (serum)",
+      "name": "Serum Pregnancy Safety Test",
+      "nameAliases": [
+        "Serum Pregnancy Safety Test"
+      ]
     },
     "core-cssrs": {
       "timeMinutes": 10,
@@ -632,7 +868,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "SAFETY",
-      "derivation": "C-SSRS administration; FDA suicidality guidance"
+      "derivation": "C-SSRS administration; FDA suicidality guidance",
+      "name": "C-SSRS",
+      "nameAliases": [
+        "C-SSRS",
+        "Columbia Suicide Severity",
+        "Columbia-Suicide Severity Rating Scale"
+      ]
     },
     "core-dlt-assessment": {
       "timeMinutes": 10,
@@ -651,7 +893,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "SAFETY",
-      "derivation": "DLT evaluation per protocol; Phase 1 oncology standard"
+      "derivation": "DLT evaluation per protocol; Phase 1 oncology standard",
+      "name": "DLT Assessment",
+      "nameAliases": [
+        "DLT Assessment",
+        "Dose Limiting Toxicity"
+      ]
     },
     "core-study-drug-admin": {
       "timeMinutes": 60,
@@ -670,7 +917,15 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "TREATMENT",
-      "derivation": "CMS PFS CPT 96365 (IV infusion 1st hour)"
+      "derivation": "CMS PFS CPT 96365 (IV infusion 1st hour)",
+      "name": "Study Drug Administration",
+      "nameAliases": [
+        "Study Drug Administration",
+        "Study Treatment",
+        "IP Administration",
+        "Drug Administration",
+        "Infusion"
+      ]
     },
     "core-drug-dispensing": {
       "timeMinutes": 10,
@@ -689,7 +944,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "TREATMENT",
-      "derivation": "Pharmacy dispensing; site operational cost"
+      "derivation": "Pharmacy dispensing; site operational cost",
+      "name": "Drug Dispensing",
+      "nameAliases": [
+        "Drug Dispensing",
+        "IP Dispensing",
+        "Study Drug Dispensing"
+      ]
     },
     "core-drug-accountability": {
       "timeMinutes": 10,
@@ -708,7 +969,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "TREATMENT",
-      "derivation": "Drug return/count; site operational cost"
+      "derivation": "Drug return/count; site operational cost",
+      "name": "Drug Accountability",
+      "nameAliases": [
+        "Drug Accountability",
+        "IP Accountability"
+      ]
     },
     "core-dose-modification": {
       "timeMinutes": 10,
@@ -727,7 +993,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "TREATMENT",
-      "derivation": "Dose adjustment decision; clinical assessment"
+      "derivation": "Dose adjustment decision; clinical assessment",
+      "name": "Dose Modification",
+      "nameAliases": [
+        "Dose Modification",
+        "Dose Adjustment",
+        "Dose Reduction"
+      ]
     },
     "core-treatment-compliance": {
       "timeMinutes": 5,
@@ -746,7 +1018,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "TREATMENT",
-      "derivation": "Pill count/diary review; no billable procedure"
+      "derivation": "Pill count/diary review; no billable procedure",
+      "name": "Treatment Compliance",
+      "nameAliases": [
+        "Treatment Compliance",
+        "Compliance Assessment",
+        "Adherence Assessment"
+      ]
     },
     "core-treatment-assignment": {
       "timeMinutes": 5,
@@ -765,7 +1043,11 @@
       "patientFacing": false,
       "requiresFasting": false,
       "category": "TREATMENT",
-      "derivation": "IWRS/IRT assignment; no billable procedure"
+      "derivation": "IWRS/IRT assignment; no billable procedure",
+      "name": "Treatment Assignment",
+      "nameAliases": [
+        "Treatment Assignment"
+      ]
     },
     "core-unblinding": {
       "timeMinutes": 5,
@@ -784,7 +1066,11 @@
       "patientFacing": false,
       "requiresFasting": false,
       "category": "TREATMENT",
-      "derivation": "Emergency unblinding; no billable procedure"
+      "derivation": "Emergency unblinding; no billable procedure",
+      "name": "Unblinding",
+      "nameAliases": [
+        "Unblinding"
+      ]
     },
     "core-rescue-medication": {
       "timeMinutes": 5,
@@ -803,7 +1089,11 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "TREATMENT",
-      "derivation": "Rescue med documentation; no billable procedure"
+      "derivation": "Rescue med documentation; no billable procedure",
+      "name": "Rescue Medication",
+      "nameAliases": [
+        "Rescue Medication"
+      ]
     },
     "core-pk-blood-sampling": {
       "timeMinutes": 5,
@@ -822,7 +1112,14 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PK",
-      "derivation": "CMS PFS CPT 36415 (venipuncture); SST 5mL per PK timepoint"
+      "derivation": "CMS PFS CPT 36415 (venipuncture); SST 5mL per PK timepoint",
+      "name": "PK Blood Sampling",
+      "nameAliases": [
+        "PK Blood Sampling",
+        "PK Sample",
+        "Pharmacokinetic Blood Sampling",
+        "Pharmacokinetic Sample"
+      ]
     },
     "core-pk-trough": {
       "timeMinutes": 5,
@@ -841,7 +1138,12 @@
       "patientFacing": true,
       "requiresFasting": true,
       "category": "PK",
-      "derivation": "CMS CLFS CPT 80299 (quantitative drug level); SST 5mL; pre-dose"
+      "derivation": "CMS CLFS CPT 80299 (quantitative drug level); SST 5mL; pre-dose",
+      "name": "PK Trough",
+      "nameAliases": [
+        "PK Trough",
+        "Trough Level"
+      ]
     },
     "core-pk-cmax": {
       "timeMinutes": 5,
@@ -860,7 +1162,11 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PK",
-      "derivation": "CMS CLFS CPT 80299; peak concentration timepoint; SST 5mL"
+      "derivation": "CMS CLFS CPT 80299; peak concentration timepoint; SST 5mL",
+      "name": "PK Cmax",
+      "nameAliases": [
+        "PK Cmax"
+      ]
     },
     "core-pk-auc": {
       "timeMinutes": 5,
@@ -879,7 +1185,11 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PK",
-      "derivation": "CMS CLFS CPT 80299; serial sampling for AUC; SST 5mL"
+      "derivation": "CMS CLFS CPT 80299; serial sampling for AUC; SST 5mL",
+      "name": "PK AUC",
+      "nameAliases": [
+        "PK AUC"
+      ]
     },
     "core-immunogenicity-ada": {
       "timeMinutes": 5,
@@ -898,7 +1208,14 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PK",
-      "derivation": "CMS CLFS CPT 86235 (antibody assay); SST 5mL"
+      "derivation": "CMS CLFS CPT 86235 (antibody assay); SST 5mL",
+      "name": "Immunogenicity",
+      "nameAliases": [
+        "Immunogenicity",
+        "ADA Test",
+        "Anti-Drug Antibody",
+        "Immunogenicity Assessment"
+      ]
     },
     "core-drug-concentration": {
       "timeMinutes": 5,
@@ -917,7 +1234,11 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PK",
-      "derivation": "CMS CLFS CPT 80299; quantitative drug assay; SST 5mL"
+      "derivation": "CMS CLFS CPT 80299; quantitative drug assay; SST 5mL",
+      "name": "Drug Concentration Measurement",
+      "nameAliases": [
+        "Drug Concentration Measurement"
+      ]
     },
     "core-urine-pk": {
       "timeMinutes": 10,
@@ -936,7 +1257,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PK",
-      "derivation": "CMS CLFS CPT 80299; urine drug concentration"
+      "derivation": "CMS CLFS CPT 80299; urine drug concentration",
+      "name": "Urine PK",
+      "nameAliases": [
+        "Urine PK",
+        "Urine Pharmacokinetics"
+      ]
     },
     "core-biospecimen": {
       "timeMinutes": 10,
@@ -955,7 +1281,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PK",
-      "derivation": "CMS PFS CPT 36415; blood/tissue for biobanking; Red top 7mL"
+      "derivation": "CMS PFS CPT 36415; blood/tissue for biobanking; Red top 7mL",
+      "name": "Biospecimen Collection",
+      "nameAliases": [
+        "Biospecimen Collection",
+        "Biomarker Sample",
+        "Blood Sample"
+      ]
     },
     "core-ct-scan": {
       "timeMinutes": 30,
@@ -974,7 +1306,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 71260 (CT chest w/contrast) RVU 2.75"
+      "derivation": "CMS PFS CPT 71260 (CT chest w/contrast) RVU 2.75",
+      "name": "CT Scan",
+      "nameAliases": [
+        "CT Scan",
+        "CT Assessment",
+        "Computed Tomography"
+      ]
     },
     "core-mri": {
       "timeMinutes": 45,
@@ -993,7 +1331,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 70553 (MRI brain w/wo contrast) RVU 3.52"
+      "derivation": "CMS PFS CPT 70553 (MRI brain w/wo contrast) RVU 3.52",
+      "name": "MRI",
+      "nameAliases": [
+        "MRI",
+        "Magnetic Resonance Imaging",
+        "MRI Assessment"
+      ]
     },
     "core-pet-ct": {
       "timeMinutes": 60,
@@ -1012,7 +1356,14 @@
       "patientFacing": true,
       "requiresFasting": true,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 78816 (PET w/CT) RVU 5.40"
+      "derivation": "CMS PFS CPT 78816 (PET w/CT) RVU 5.40",
+      "name": "PET/CT",
+      "nameAliases": [
+        "PET/CT",
+        "PET-CT",
+        "PET Scan",
+        "PET CT Scan"
+      ]
     },
     "core-xray": {
       "timeMinutes": 10,
@@ -1031,7 +1382,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 71046 (chest X-ray 2 views) RVU 0.57"
+      "derivation": "CMS PFS CPT 71046 (chest X-ray 2 views) RVU 0.57",
+      "name": "X-Ray",
+      "nameAliases": [
+        "X-Ray",
+        "Radiograph"
+      ]
     },
     "core-ultrasound": {
       "timeMinutes": 20,
@@ -1050,7 +1406,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 76700 (abdominal US) RVU 1.27"
+      "derivation": "CMS PFS CPT 76700 (abdominal US) RVU 1.27",
+      "name": "Ultrasound",
+      "nameAliases": [
+        "Ultrasound",
+        "Ultrasonography"
+      ]
     },
     "core-echocardiography": {
       "timeMinutes": 30,
@@ -1069,7 +1430,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 93306 (echo complete) RVU 1.87"
+      "derivation": "CMS PFS CPT 93306 (echo complete) RVU 1.87",
+      "name": "Echocardiography",
+      "nameAliases": [
+        "Echocardiography",
+        "Echocardiogram",
+        "ECHO"
+      ]
     },
     "core-dexa": {
       "timeMinutes": 15,
@@ -1088,7 +1455,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 77080 (DEXA axial) RVU 0.66"
+      "derivation": "CMS PFS CPT 77080 (DEXA axial) RVU 0.66",
+      "name": "DEXA Scan",
+      "nameAliases": [
+        "DEXA Scan",
+        "Bone Density",
+        "DXA"
+      ]
     },
     "core-chest-xray": {
       "timeMinutes": 10,
@@ -1107,7 +1480,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 71046 (chest X-ray 2 views) RVU 0.57"
+      "derivation": "CMS PFS CPT 71046 (chest X-ray 2 views) RVU 0.57",
+      "name": "Chest X-Ray",
+      "nameAliases": [
+        "Chest X-Ray",
+        "Chest Radiograph"
+      ]
     },
     "core-mammography": {
       "timeMinutes": 15,
@@ -1126,7 +1504,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "IMAGING",
-      "derivation": "CMS PFS CPT 77067 (bilateral mammo screening) RVU 1.26"
+      "derivation": "CMS PFS CPT 77067 (bilateral mammo screening) RVU 1.26",
+      "name": "Mammography",
+      "nameAliases": [
+        "Mammography",
+        "Mammogram"
+      ]
     },
     "core-eq5d5l": {
       "timeMinutes": 8,
@@ -1145,7 +1528,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 8 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 8 min avg from published validation studies",
+      "name": "EQ-5D-5L",
+      "nameAliases": [
+        "EQ-5D-5L",
+        "EQ-5D",
+        "EuroQol"
+      ]
     },
     "core-sf36": {
       "timeMinutes": 10,
@@ -1164,7 +1553,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 10 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 10 min avg from published validation studies",
+      "name": "SF-36",
+      "nameAliases": [
+        "SF-36",
+        "Short Form 36"
+      ]
     },
     "core-fact-g": {
       "timeMinutes": 10,
@@ -1183,7 +1577,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 10 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 10 min avg from published validation studies",
+      "name": "FACT-G",
+      "nameAliases": [
+        "FACT-G",
+        "Functional Assessment of Cancer Therapy"
+      ]
     },
     "core-pgic": {
       "timeMinutes": 3,
@@ -1202,7 +1601,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 3 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 3 min avg from published validation studies",
+      "name": "PGIC",
+      "nameAliases": [
+        "PGIC",
+        "Patient Global Impression of Change"
+      ]
     },
     "core-pgis": {
       "timeMinutes": 3,
@@ -1221,7 +1625,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 3 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 3 min avg from published validation studies",
+      "name": "PGIS",
+      "nameAliases": [
+        "PGIS",
+        "Patient Global Impression of Severity"
+      ]
     },
     "core-vas-pain": {
       "timeMinutes": 2,
@@ -1240,7 +1649,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 2 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 2 min avg from published validation studies",
+      "name": "VAS Pain",
+      "nameAliases": [
+        "VAS Pain",
+        "Visual Analog Scale Pain"
+      ]
     },
     "core-nrs-pain": {
       "timeMinutes": 2,
@@ -1259,7 +1673,13 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 2 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 2 min avg from published validation studies",
+      "name": "NRS Pain",
+      "nameAliases": [
+        "NRS Pain",
+        "Numeric Rating Scale Pain",
+        "Pain NRS"
+      ]
     },
     "core-promis29": {
       "timeMinutes": 10,
@@ -1278,7 +1698,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 10 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 10 min avg from published validation studies",
+      "name": "PROMIS-29",
+      "nameAliases": [
+        "PROMIS-29",
+        "PROMIS"
+      ]
     },
     "core-phq9": {
       "timeMinutes": 5,
@@ -1297,7 +1722,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 5 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 5 min avg from published validation studies",
+      "name": "PHQ-9",
+      "nameAliases": [
+        "PHQ-9",
+        "Patient Health Questionnaire"
+      ]
     },
     "core-gad7": {
       "timeMinutes": 4,
@@ -1316,7 +1746,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 4 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 4 min avg from published validation studies",
+      "name": "GAD-7",
+      "nameAliases": [
+        "GAD-7",
+        "Generalized Anxiety Disorder"
+      ]
     },
     "core-bpi": {
       "timeMinutes": 8,
@@ -1335,7 +1770,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 8 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 8 min avg from published validation studies",
+      "name": "BPI",
+      "nameAliases": [
+        "BPI",
+        "Brief Pain Inventory"
+      ]
     },
     "core-psqi": {
       "timeMinutes": 10,
@@ -1354,7 +1794,12 @@
       "patientFacing": true,
       "requiresFasting": false,
       "category": "PRO",
-      "derivation": "Self-administered PRO; 10 min avg from published validation studies"
+      "derivation": "Self-administered PRO; 10 min avg from published validation studies",
+      "name": "PSQI",
+      "nameAliases": [
+        "PSQI",
+        "Pittsburgh Sleep Quality Index"
+      ]
     },
     "ta-onc-recist": {
       "timeMinutes": 30,

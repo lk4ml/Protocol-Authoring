@@ -1,7 +1,7 @@
 {
-  "name": "protocol-authoring-platform",
+  "name": "protohelix",
   "version": "1.0.0",
-  "description": "Protocol Authoring Platform with CDISC and TransCelerate DDF integration",
+  "description": "ProtoHelix — AI-Powered Clinical Protocol Authoring with CDISC and TransCelerate DDF integration",
   "type": "module",
   "scripts": {
     "dev": "vite",

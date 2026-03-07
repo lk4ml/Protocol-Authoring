@@ -1246,7 +1246,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C41331 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -1375,7 +1375,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C105448 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -1418,7 +1418,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C132447 | Categories: Subject Disposition, Protocol Milestones",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "ELIGIBILITY",
       "therapeuticArea": "ALL"
     },
     {
@@ -1460,7 +1460,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C139236 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -1502,7 +1502,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C50996 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -1523,7 +1523,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C74590 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -1544,7 +1544,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C74588 | Categories: Subject Disposition, Protocol Milestones",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -2152,7 +2152,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C179176 | Categories: Events, Reported Events, Adverse Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -2253,7 +2253,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C150824 | Categories: Subject Disposition, Non-Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -2295,7 +2295,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C142742 | Categories: Subject Disposition, Disposition Events, Other Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -2317,7 +2317,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C170610 | Categories: Subject Disposition, Disposition Events, Other Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -2339,7 +2339,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C186208 | Categories: Subject Disposition, Disposition Events, Non-Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3270,7 +3270,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C191656 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3291,7 +3291,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C25250 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3312,7 +3312,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C28554 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3333,7 +3333,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C35571 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3354,7 +3354,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C48227 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3375,7 +3375,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C48226 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3396,7 +3396,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C48250 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3417,7 +3417,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C49634 | Categories: Subject Disposition, Protocol Disposition Events",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {
@@ -3479,7 +3479,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C25370 | Categories: Eligibility Criteria, Inclusion Exclusion Criteria",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "ELIGIBILITY",
       "therapeuticArea": "ALL"
     },
     {
@@ -3521,7 +3521,7 @@
       "source": "CDISC Library API",
       "sourceDetail": "CDISC COSMoS BC: C25532 | Categories: Eligibility Criteria, Inclusion Exclusion Criteria",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "ELIGIBILITY",
       "therapeuticArea": "ALL"
     },
     {
@@ -19445,7 +19445,7 @@
       "source": "ICH M11 Section 6",
       "sourceDetail": "ICH M11 Section 6",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "ELIGIBILITY",
       "therapeuticArea": "ALL"
     },
     {
@@ -19517,7 +19517,7 @@
       "source": "CDISC SDTM IG v3.4",
       "sourceDetail": "CDISC SDTM IG v3.4",
       "soaGroupId": "ADMIN",
-      "activityGroupId": "CONSENT",
+      "activityGroupId": "DISPOSITION",
       "therapeuticArea": "ALL"
     },
     {

@@ -7,11 +7,16 @@ avoiding CORS issues and providing more reliable connectivity.
 Also provides SOA auto-population from NCT trial data.
 """
 
+import logging
+import traceback
+
 import httpx
 from fastapi import APIRouter, HTTPException
 
 from ..config import settings
 from ..services.soa_mapper import build_suggested_soa
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -148,7 +153,14 @@ async def suggest_soa_from_nct(nct_id: str):
     }
 
     # Run the SOA mapper
-    suggestion = build_suggested_soa(trial_data)
+    try:
+        suggestion = build_suggested_soa(trial_data)
+    except Exception as e:
+        logger.error("build_suggested_soa failed for %s: %s\n%s", nct_id, e, traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate SOA suggestion for {nct_id}: {str(e)}",
+        )
 
     # Include trial metadata in the response
     suggestion["trialInfo"] = {
