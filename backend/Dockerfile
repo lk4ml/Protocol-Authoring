@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Expose the port (Render sets PORT env var)
+# Expose the port (Railway/Render set PORT env var)
 EXPOSE 8001
 
 # Start the application
