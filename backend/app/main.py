@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -10,16 +11,27 @@ from .routers import protocols, design, schedule, terminology, templates, export
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Startup / shutdown lifecycle: initialize Neo4j driver + schema."""
-    from .graph import get_driver, close_driver, verify_connectivity
+async def _init_graph_background():
+    """Connect to Neo4j with retries, then load data. Runs in background."""
+    import asyncio
+    from .graph import get_driver, verify_connectivity
     from .graph.schema import ensure_constraints
 
-    driver = await get_driver()
-    await verify_connectivity()
-    await ensure_constraints(driver)
-    logger.info("Neo4j connected and schema initialized")
+    # Retry Neo4j connection up to 5 times (Railway internal DNS can be slow)
+    for attempt in range(1, 6):
+        try:
+            driver = await get_driver()
+            await verify_connectivity()
+            await ensure_constraints(driver)
+            logger.info("Neo4j connected and schema initialized")
+            break
+        except Exception as e:
+            logger.warning(f"Neo4j connection attempt {attempt}/5 failed: {e}")
+            if attempt < 5:
+                await asyncio.sleep(3 * attempt)
+            else:
+                logger.error("Could not connect to Neo4j after 5 attempts — running in degraded mode")
+                return
 
     # Load CDISC CT into graph (idempotent — skips if already loaded)
     try:
@@ -37,9 +49,20 @@ async def lifespan(app: FastAPI):
     except Exception as lib_err:
         logger.warning(f"Library loading skipped ({lib_err})")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup / shutdown lifecycle: initialize Neo4j driver + schema."""
+    from .graph import close_driver
+
+    # Start graph initialization in background so the server can
+    # begin accepting requests (healthcheck) immediately.
+    task = asyncio.create_task(_init_graph_background())
+
     yield
 
     # Shutdown
+    task.cancel()
     await close_driver()
 
 
