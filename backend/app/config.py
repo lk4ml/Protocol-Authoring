@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra env vars (e.g. DATABASE_URL injected by Railway)
 
 
 settings = Settings()
