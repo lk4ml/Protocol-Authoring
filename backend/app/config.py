@@ -30,6 +30,8 @@ class Settings(BaseSettings):
         "https://frontend-mveu7vjtg-lk4mls-projects.vercel.app",
         "https://frontend-8ihhs1kzf-lk4mls-projects.vercel.app",
         "https://protohelix.vercel.app",
+        "https://protohelix.com",
+        "https://www.protohelix.com",
     ]
 
     # Neo4j graph database
